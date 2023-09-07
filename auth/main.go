@@ -2,6 +2,7 @@ package auth
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/wernerdweight/api-auth-go/auth/config"
 	"github.com/wernerdweight/api-auth-go/auth/contract"
 	"github.com/wernerdweight/api-auth-go/auth/routes"
 	"github.com/wernerdweight/api-auth-go/auth/security"
@@ -10,10 +11,17 @@ import (
 	"time"
 )
 
-func Middleware(r *gin.Engine, config contract.Config) gin.HandlerFunc {
+func Middleware(r *gin.Engine, c contract.Config) gin.HandlerFunc {
 	log.Println("setting up api-auth middleware...")
 	routes.Register(r)
-	// TODO: init config provider
+	config.ProviderInstance.Init(c)
+
+	if !config.ProviderInstance.IsApiKeyModeEnabled() && !config.ProviderInstance.IsClientIdAndSecretModeEnabled() {
+		log.Println("api-auth is disabled")
+		return func(c *gin.Context) {
+			c.Next()
+		}
+	}
 
 	return func(c *gin.Context) {
 		t := time.Now()
@@ -23,7 +31,9 @@ func Middleware(r *gin.Engine, config contract.Config) gin.HandlerFunc {
 		if nil != err {
 			log.Printf("AUTH: %v", err)
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error": err.Error(),
+				"code":    err.Code,
+				"error":   err.Err.Error(),
+				"payload": err.Payload,
 			})
 			return
 		}
