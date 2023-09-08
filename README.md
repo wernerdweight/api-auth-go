@@ -1,7 +1,7 @@
-API Auth for Go
+API Auth for Gin (Go Framework)
 ====================================
 
-This package helps with using ENV files. It looks for an ENV file in the current working directory and any parent directories until the point it finds an ENV file or reaches the root.
+A Gin middleware providing authentication, authorisation, access control, FUP and other functionality for APIs.
 
 [![Build Status](https://www.travis-ci.com/wernerdweight/api-auth-go.svg?branch=master)](https://www.travis-ci.com/wernerdweight/api-auth-go)
 [![Go Report Card](https://goreportcard.com/badge/github.com/wernerdweight/api-auth-go)](https://goreportcard.com/report/github.com/wernerdweight/api-auth-go)
