@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/wernerdweight/api-auth-go/auth/checker"
 	"github.com/wernerdweight/api-auth-go/auth/contract"
 	"time"
 )
@@ -27,6 +28,26 @@ func (p *Provider) GetClientProvider() contract.ApiClientProviderInterface[contr
 
 func (p *Provider) IsClientScopeAccessModelEnabled() bool {
 	return *p.config.Client.UseScopeAccessModel
+}
+
+func (p *Provider) ShouldExcludeOptionsRequests() bool {
+	return *p.config.ExcludeOptionsRequests
+}
+
+func (p *Provider) GetClientScopeAccessChecker() contract.AccessScopeCheckerInterface {
+	return p.config.Client.AccessScopeChecker
+}
+
+func (p *Provider) GetUserProvider() contract.ApiUserProviderInterface[contract.ApiUserInterface] {
+	return p.config.User.Provider
+}
+
+func (p *Provider) IsUserScopeAccessModelEnabled() bool {
+	return *p.config.User.UseScopeAccessModel
+}
+
+func (p *Provider) GetUserScopeAccessChecker() contract.AccessScopeCheckerInterface {
+	return p.config.User.AccessScopeChecker
 }
 
 func (p *Provider) Init(config contract.Config) {
@@ -90,14 +111,14 @@ var ProviderInstance = &Provider{
 		Client: contract.ClientConfig{
 			Provider:            nil,
 			UseScopeAccessModel: &defaultClientUseScopeAccessModel,
-			AccessScopeChecker:  nil,
+			AccessScopeChecker:  checker.PathAccessScopeChecker{},
 		},
 		User: &contract.UserConfig{
 			Provider:                   nil,
 			TokenProvider:              nil,
 			ApiTokenExpirationInterval: &defaultExpirationInterval,
 			UseScopeAccessModel:        &defaultUserUseScopeAccessModel,
-			AccessScopeChecker:         nil,
+			AccessScopeChecker:         checker.PathAccessScopeChecker{},
 		},
 		Mode: &contract.ModesConfig{
 			ApiKey:            &defaultApiKeyMode,

@@ -35,3 +35,34 @@ func NewMemoryApiClientProvider(memory []entity.MemoryApiClient) *MemoryApiClien
 		memory: memory,
 	}
 }
+
+// MemoryApiUserProvider is the simplest implementation of the ApiUserProviderInterface
+type MemoryApiUserProvider struct {
+	memory []entity.MemoryApiUser
+}
+
+func (p MemoryApiUserProvider) ProvideByLoginAndPassword(login string, password string) (contract.ApiUserInterface, *contract.AuthError) {
+	for _, user := range p.memory {
+		if user.Login == login && user.Password == password {
+			return &user, nil
+		}
+	}
+
+	return nil, contract.NewAuthError(contract.UserNotFound, nil)
+}
+
+func (p MemoryApiUserProvider) ProvideByToken(token string) (contract.ApiUserInterface, *contract.AuthError) {
+	for _, user := range p.memory {
+		if user.AccessToken == token {
+			return &user, nil
+		}
+	}
+
+	return nil, contract.NewAuthError(contract.UserNotFound, nil)
+}
+
+func NewMemoryApiUserProvider(memory []entity.MemoryApiUser) *MemoryApiUserProvider {
+	return &MemoryApiUserProvider{
+		memory: memory,
+	}
+}

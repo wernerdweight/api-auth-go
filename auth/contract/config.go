@@ -7,8 +7,8 @@ type ClientConfig struct {
 	Provider ApiClientProviderInterface[ApiClientInterface]
 	// UseScopeAccessModel: if set to true, client scope will be checked before granting access (see `scope access` below) - default false
 	UseScopeAccessModel *bool
-	// AccessScopeChecker: the checker used to check scope access that implements AccessScopeCheckerInterface - defaults to RouteChecker (see below)
-	AccessScopeChecker *AccessScopeCheckerInterface
+	// AccessScopeChecker: the checker used to check scope access that implements AccessScopeCheckerInterface - defaults to PathAccessScopeChecker
+	AccessScopeChecker AccessScopeCheckerInterface
 }
 
 type UserConfig struct {
@@ -21,8 +21,8 @@ type UserConfig struct {
 	ApiTokenExpirationInterval *time.Duration
 	// UseScopeAccessModel: if set to true, user scope will be checked before granting access (see `scope access` below) - default false
 	UseScopeAccessModel *bool
-	// AccessScopeChecker: the checker used to check scope access that implements AccessScopeCheckerInterface - defaults to RouteChecker (see below)
-	AccessScopeChecker *AccessScopeCheckerInterface
+	// AccessScopeChecker: the checker used to check scope access that implements AccessScopeCheckerInterface - defaults to PathAccessScopeChecker
+	AccessScopeChecker AccessScopeCheckerInterface
 }
 
 type ModesConfig struct {

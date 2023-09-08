@@ -27,6 +27,11 @@ func Middleware(r *gin.Engine, c contract.Config) gin.HandlerFunc {
 		t := time.Now()
 
 		// before request
+		if config.ProviderInstance.ShouldExcludeOptionsRequests() && http.MethodOptions == c.Request.Method {
+			c.Next()
+			return
+		}
+
 		err := security.Authenticate(c)
 		if nil != err {
 			log.Printf("AUTH: %v", err)
