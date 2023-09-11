@@ -53,7 +53,7 @@ func (p MemoryApiUserProvider) ProvideByLoginAndPassword(login string, password 
 
 func (p MemoryApiUserProvider) ProvideByToken(token string) (contract.ApiUserInterface, *contract.AuthError) {
 	for _, user := range p.memory {
-		if user.AccessToken == token {
+		if user.CurrentToken.Token == token {
 			return &user, nil
 		}
 	}
