@@ -31,20 +31,19 @@ func (c MemoryApiClient) GetClientScope() *contract.AccessScope {
 
 // MemoryApiUser is the simplest struct that implements ApiUserInterface
 type MemoryApiUser struct {
-	Id          string
-	Login       string
-	Password    string
-	AccessToken string
-	AccessScope *contract.AccessScope
+	Id           string
+	Login        string
+	Password     string
+	CurrentToken *MemoryApiUserToken
+	AccessScope  *contract.AccessScope
 }
 
 func (u MemoryApiUser) AddApiToken(apiToken contract.ApiUserTokenInterface) {
-	u.AccessToken = apiToken.GetToken()
+	u.CurrentToken = apiToken.(*MemoryApiUserToken)
 }
 
-func (u MemoryApiUser) GetCurrentToken() *contract.ApiUserTokenInterface {
-	// TODO: implement ApiUserTokenInterface and return an instance here
-	return nil
+func (u MemoryApiUser) GetCurrentToken() contract.ApiUserTokenInterface {
+	return u.CurrentToken
 }
 
 func (u MemoryApiUser) GetUserScope() *contract.AccessScope {
@@ -57,4 +56,35 @@ func (u MemoryApiUser) GetLastLoginAt() time.Time {
 
 func (u MemoryApiUser) SetLastLoginAt(lastLoginAt time.Time) {
 	// no-op
+}
+
+// MemoryApiUserToken is the simplest struct that implements ApiUserTokenInterface
+type MemoryApiUserToken struct {
+	Token          string
+	ExpirationDate time.Time
+	ApiUser        MemoryApiUser
+}
+
+func (t MemoryApiUserToken) SetToken(token string) {
+	t.Token = token
+}
+
+func (t MemoryApiUserToken) GetToken() string {
+	return t.Token
+}
+
+func (t MemoryApiUserToken) SetExpirationDate(expirationDate time.Time) {
+	t.ExpirationDate = expirationDate
+}
+
+func (t MemoryApiUserToken) GetExpirationDate() time.Time {
+	return t.ExpirationDate
+}
+
+func (t MemoryApiUserToken) SetApiUser(apiUser contract.ApiUserInterface) {
+	t.ApiUser = apiUser.(MemoryApiUser)
+}
+
+func (t MemoryApiUserToken) GetApiUser() contract.ApiUserInterface {
+	return t.ApiUser
 }

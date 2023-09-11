@@ -50,6 +50,10 @@ func (p *Provider) GetUserScopeAccessChecker() contract.AccessScopeCheckerInterf
 	return p.config.User.AccessScopeChecker
 }
 
+func (p *Provider) GetApiTokenExpirationInterval() time.Duration {
+	return *p.config.User.ApiTokenExpirationInterval
+}
+
 func (p *Provider) Init(config contract.Config) {
 	if nil != config.Client.Provider {
 		p.config.Client.Provider = config.Client.Provider

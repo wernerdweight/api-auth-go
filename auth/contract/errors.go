@@ -20,6 +20,8 @@ const (
 	UserForbidden
 	UnknownScopeAccessibility
 	UserProviderNotConfigured
+	DatabaseError
+	UserTokenExpired
 )
 
 var AuthErrorCodes = map[AuthErrorCode]string{
@@ -32,6 +34,8 @@ var AuthErrorCodes = map[AuthErrorCode]string{
 	UserForbidden:             "user access forbidden",
 	UnknownScopeAccessibility: "unknown scope accessibility",
 	UserProviderNotConfigured: "user provider not configured",
+	DatabaseError:             "database error",
+	UserTokenExpired:          "user token expired",
 }
 
 func NewAuthError(code AuthErrorCode, payload interface{}) *AuthError {
