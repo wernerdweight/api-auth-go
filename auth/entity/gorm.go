@@ -1,16 +1,22 @@
 package entity
 
 import (
+	"github.com/google/uuid"
 	"github.com/wernerdweight/api-auth-go/auth/contract"
 	"time"
 )
 
 // GormApiClient is a struct that implements ApiClientInterface for GORM
 type GormApiClient struct {
+	ID           uuid.UUID `gorm:"primaryKey;type:uuid;default:uuid_generate_v4()"`
 	ClientId     string
 	ClientSecret string
 	ApiKey       string
-	AccessScope  *contract.AccessScope
+	AccessScope  *contract.AccessScope `gorm:"type:jsonb"`
+}
+
+func (c GormApiClient) TableName() string {
+	return "api_client"
 }
 
 func (c GormApiClient) GetClientId() string {
@@ -31,12 +37,17 @@ func (c GormApiClient) GetClientScope() *contract.AccessScope {
 
 // GormApiUser is a struct that implements ApiUserInterface for GORM
 type GormApiUser struct {
+	ID           uuid.UUID `gorm:"primaryKey;type:uuid;default:uuid_generate_v4()"`
 	Login        string
 	Password     string
-	AccessScope  *contract.AccessScope
+	AccessScope  *contract.AccessScope `gorm:"type:jsonb"`
 	LastLoginAt  time.Time
-	CurrentToken *GormApiUserToken
-	ApiTokens    []GormApiUserToken
+	CurrentToken *GormApiUserToken  `gorm:"-"`
+	ApiTokens    []GormApiUserToken `gorm:"foreignKey:ApiUserID"`
+}
+
+func (u GormApiUser) TableName() string {
+	return "api_user"
 }
 
 func (u GormApiUser) AddApiToken(apiToken contract.ApiUserTokenInterface) {
@@ -62,9 +73,15 @@ func (u GormApiUser) SetLastLoginAt(lastLoginAt time.Time) {
 
 // GormApiUserToken is a struct that implements ApiUserTokenInterface for GORM
 type GormApiUserToken struct {
+	ID             uuid.UUID `gorm:"primaryKey;type:uuid;default:uuid_generate_v4()"`
 	Token          string
 	ExpirationDate time.Time
 	ApiUser        GormApiUser
+	ApiUserID      uuid.UUID
+}
+
+func (t GormApiUserToken) TableName() string {
+	return "api_user_token"
 }
 
 func (t GormApiUserToken) SetToken(token string) {
