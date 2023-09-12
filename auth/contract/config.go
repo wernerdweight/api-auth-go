@@ -14,9 +14,8 @@ type ClientConfig struct {
 type UserConfig struct {
 	// Provider: your provider that implements ApiUserProviderInterface
 	Provider ApiUserProviderInterface[ApiUserInterface]
-	// TokenProvider: your provider that implements ApiUserTokenProviderInterface
-	// TODO: maybe we need factory instead of provider?
-	TokenProvider ApiUserTokenProviderInterface[ApiUserTokenInterface]
+	// TokenFactory: your token type that implements ApiUserTokenInterface
+	TokenFactory func() ApiUserTokenInterface
 	// ApiTokenExpirationInterval: token expiration in seconds - defaults to 2,592,000 (30 days)
 	ApiTokenExpirationInterval *time.Duration
 	// UseScopeAccessModel: if set to true, user scope will be checked before granting access (see `scope access` below) - default false

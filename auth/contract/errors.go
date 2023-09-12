@@ -12,6 +12,7 @@ type AuthError struct {
 
 const (
 	Unknown AuthErrorCode = iota
+	Unauthorized
 	ClientNotFound
 	UserNotFound
 	NoCredentialsProvided
@@ -22,10 +23,12 @@ const (
 	UserProviderNotConfigured
 	DatabaseError
 	UserTokenExpired
+	InvalidCredentials
 )
 
 var AuthErrorCodes = map[AuthErrorCode]string{
 	Unknown:                   "unknown error",
+	Unauthorized:              "unauthorized",
 	ClientNotFound:            "client not found",
 	UserNotFound:              "user not found",
 	NoCredentialsProvided:     "no credentials provided",
@@ -36,6 +39,7 @@ var AuthErrorCodes = map[AuthErrorCode]string{
 	UserProviderNotConfigured: "user provider not configured",
 	DatabaseError:             "database error",
 	UserTokenExpired:          "user token expired",
+	InvalidCredentials:        "invalid credentials",
 }
 
 func NewAuthError(code AuthErrorCode, payload interface{}) *AuthError {

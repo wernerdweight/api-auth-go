@@ -30,6 +30,11 @@ func (p MemoryApiClientProvider) ProvideByApiKey(apiKey string) (contract.ApiCli
 	return nil, contract.NewAuthError(contract.ClientNotFound, nil)
 }
 
+func (p MemoryApiClientProvider) Save(client contract.ApiClientInterface) *contract.AuthError {
+	// no-op (saved in memory)
+	return nil
+}
+
 func NewMemoryApiClientProvider(memory []entity.MemoryApiClient) *MemoryApiClientProvider {
 	return &MemoryApiClientProvider{
 		memory: memory,
@@ -59,6 +64,11 @@ func (p MemoryApiUserProvider) ProvideByToken(token string) (contract.ApiUserInt
 	}
 
 	return nil, contract.NewAuthError(contract.UserNotFound, nil)
+}
+
+func (p MemoryApiUserProvider) Save(client contract.ApiUserInterface) *contract.AuthError {
+	// no-op (saved in memory)
+	return nil
 }
 
 func NewMemoryApiUserProvider(memory []entity.MemoryApiUser) *MemoryApiUserProvider {

@@ -10,9 +10,7 @@ const (
 	ScopeAccessibilityAccessible ScopeAccessibility = "true"
 	ScopeAccessibilityForbidden  ScopeAccessibility = "false"
 	ScopeAccessibilityOnBehalf   ScopeAccessibility = "on-behalf"
-	RouteKey                                        = "_route"
-	RouteOverrideKey                                = "_route_override"
-	Realm                                           = "Basic realm=\"API\""
+	DefaultTokenLength                              = 32
 
 	ApiClient = "api-client"
 	ApiUser   = "api-user"

@@ -45,6 +45,15 @@ func (p GormApiClientProvider) ProvideByApiKey(apiKey string) (contract.ApiClien
 	return apiClient, nil
 }
 
+func (p GormApiClientProvider) Save(client contract.ApiClientInterface) *contract.AuthError {
+	conn := p.getConnection()
+	result := conn.Save(client)
+	if nil != result.Error {
+		return contract.NewAuthError(contract.DatabaseError, map[string]error{"details": result.Error})
+	}
+	return nil
+}
+
 func NewGormApiClientProvider(newApiClient func() contract.ApiClientInterface, getConnection func() *gorm.DB) *GormApiClientProvider {
 	return &GormApiClientProvider{
 		newApiClient:  newApiClient,
@@ -93,7 +102,16 @@ func (p GormApiUserProvider) ProvideByToken(token string) (contract.ApiUserInter
 	return apiUserToken.GetApiUser(), nil
 }
 
-func NewGormApiUserProvider(newApiUser contract.ApiUserInterface, newApiUserToken func() contract.ApiUserTokenInterface, getConnection func() *gorm.DB) *GormApiUserProvider {
+func (p GormApiUserProvider) Save(user contract.ApiUserInterface) *contract.AuthError {
+	conn := p.getConnection()
+	result := conn.Save(user)
+	if nil != result.Error {
+		return contract.NewAuthError(contract.DatabaseError, map[string]error{"details": result.Error})
+	}
+	return nil
+}
+
+func NewGormApiUserProvider(newApiUser func() contract.ApiUserInterface, newApiUserToken func() contract.ApiUserTokenInterface, getConnection func() *gorm.DB) *GormApiUserProvider {
 	return &GormApiUserProvider{
 		newApiUser:      nil,
 		newApiUserToken: nil,

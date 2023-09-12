@@ -54,6 +54,10 @@ func (p *Provider) GetApiTokenExpirationInterval() time.Duration {
 	return *p.config.User.ApiTokenExpirationInterval
 }
 
+func (p *Provider) GetTokenFactory() func() contract.ApiUserTokenInterface {
+	return p.config.User.TokenFactory
+}
+
 func (p *Provider) Init(config contract.Config) {
 	if nil != config.Client.Provider {
 		p.config.Client.Provider = config.Client.Provider
@@ -69,8 +73,8 @@ func (p *Provider) Init(config contract.Config) {
 		if nil != config.User.Provider {
 			p.config.User.Provider = config.User.Provider
 		}
-		if nil != config.User.TokenProvider {
-			p.config.User.TokenProvider = config.User.TokenProvider
+		if nil != config.User.TokenFactory {
+			p.config.User.TokenFactory = config.User.TokenFactory
 		}
 		if nil != config.User.ApiTokenExpirationInterval {
 			p.config.User.ApiTokenExpirationInterval = config.User.ApiTokenExpirationInterval
@@ -119,7 +123,7 @@ var ProviderInstance = &Provider{
 		},
 		User: &contract.UserConfig{
 			Provider:                   nil,
-			TokenProvider:              nil,
+			TokenFactory:               nil,
 			ApiTokenExpirationInterval: &defaultExpirationInterval,
 			UseScopeAccessModel:        &defaultUserUseScopeAccessModel,
 			AccessScopeChecker:         checker.PathAccessScopeChecker{},
