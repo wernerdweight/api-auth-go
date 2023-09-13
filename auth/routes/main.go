@@ -31,11 +31,13 @@ func extractCredentials(header string) (string, string, *contract.AuthError) {
 }
 
 func generateToken(length int) string {
+	// TODO: replace this with some tokenizer that supports a predefined alphabet
 	b := make([]byte, length)
 	if _, err := rand.Read(b); err != nil {
 		return ""
 	}
-	return hex.EncodeToString(b)
+	// FIXME: this is producing an ugly output
+	return hex.EncodeToString(b)[0:length]
 }
 
 func createToken() contract.ApiUserTokenInterface {
@@ -78,8 +80,9 @@ func authenticateHandler(c *gin.Context) {
 
 	previousLoginAt := apiUser.GetLastLoginAt()
 	token := createToken()
+	now := time.Now()
 	apiUser.AddApiToken(token)
-	apiUser.SetLastLoginAt(time.Now())
+	apiUser.SetLastLoginAt(&now)
 
 	err = apiUserProvider.Save(apiUser)
 	if nil != err {

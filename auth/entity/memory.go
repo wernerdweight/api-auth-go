@@ -13,19 +13,19 @@ type MemoryApiClient struct {
 	AccessScope *contract.AccessScope
 }
 
-func (c MemoryApiClient) GetClientId() string {
+func (c *MemoryApiClient) GetClientId() string {
 	return c.Id
 }
 
-func (c MemoryApiClient) GetClientSecret() string {
+func (c *MemoryApiClient) GetClientSecret() string {
 	return c.Secret
 }
 
-func (c MemoryApiClient) GetApiKey() string {
+func (c *MemoryApiClient) GetApiKey() string {
 	return c.ApiKey
 }
 
-func (c MemoryApiClient) GetClientScope() *contract.AccessScope {
+func (c *MemoryApiClient) GetClientScope() *contract.AccessScope {
 	return c.AccessScope
 }
 
@@ -38,53 +38,58 @@ type MemoryApiUser struct {
 	AccessScope  *contract.AccessScope
 }
 
-func (u MemoryApiUser) AddApiToken(apiToken contract.ApiUserTokenInterface) {
+func (u *MemoryApiUser) AddApiToken(apiToken contract.ApiUserTokenInterface) {
 	u.CurrentToken = apiToken.(*MemoryApiUserToken)
 }
 
-func (u MemoryApiUser) GetCurrentToken() contract.ApiUserTokenInterface {
+func (u *MemoryApiUser) GetCurrentToken() contract.ApiUserTokenInterface {
 	return u.CurrentToken
 }
 
-func (u MemoryApiUser) GetUserScope() *contract.AccessScope {
+func (u *MemoryApiUser) GetUserScope() *contract.AccessScope {
 	return u.AccessScope
 }
 
-func (u MemoryApiUser) GetLastLoginAt() time.Time {
-	return time.Now()
+func (u *MemoryApiUser) GetLastLoginAt() *time.Time {
+	lastLoginAt := time.Now()
+	return &lastLoginAt
 }
 
-func (u MemoryApiUser) SetLastLoginAt(lastLoginAt time.Time) {
+func (u *MemoryApiUser) SetLastLoginAt(lastLoginAt *time.Time) {
 	// no-op
+}
+
+func (u *MemoryApiUser) GetPassword() string {
+	return u.Password
 }
 
 // MemoryApiUserToken is the simplest struct that implements ApiUserTokenInterface
 type MemoryApiUserToken struct {
 	Token          string
 	ExpirationDate time.Time
-	ApiUser        MemoryApiUser
+	ApiUser        *MemoryApiUser
 }
 
-func (t MemoryApiUserToken) SetToken(token string) {
+func (t *MemoryApiUserToken) SetToken(token string) {
 	t.Token = token
 }
 
-func (t MemoryApiUserToken) GetToken() string {
+func (t *MemoryApiUserToken) GetToken() string {
 	return t.Token
 }
 
-func (t MemoryApiUserToken) SetExpirationDate(expirationDate time.Time) {
+func (t *MemoryApiUserToken) SetExpirationDate(expirationDate time.Time) {
 	t.ExpirationDate = expirationDate
 }
 
-func (t MemoryApiUserToken) GetExpirationDate() time.Time {
+func (t *MemoryApiUserToken) GetExpirationDate() time.Time {
 	return t.ExpirationDate
 }
 
-func (t MemoryApiUserToken) SetApiUser(apiUser contract.ApiUserInterface) {
-	t.ApiUser = apiUser.(MemoryApiUser)
+func (t *MemoryApiUserToken) SetApiUser(apiUser contract.ApiUserInterface) {
+	t.ApiUser = apiUser.(*MemoryApiUser)
 }
 
-func (t MemoryApiUserToken) GetApiUser() contract.ApiUserInterface {
+func (t *MemoryApiUserToken) GetApiUser() contract.ApiUserInterface {
 	return t.ApiUser
 }

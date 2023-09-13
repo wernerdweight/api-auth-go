@@ -17,12 +17,13 @@ const (
 	UserNotFound
 	NoCredentialsProvided
 	UserTokenRequired
+	UserTokenNotFound
+	UserTokenExpired
 	ClientForbidden
 	UserForbidden
 	UnknownScopeAccessibility
 	UserProviderNotConfigured
 	DatabaseError
-	UserTokenExpired
 	InvalidCredentials
 )
 
@@ -33,12 +34,13 @@ var AuthErrorCodes = map[AuthErrorCode]string{
 	UserNotFound:              "user not found",
 	NoCredentialsProvided:     "no credentials provided",
 	UserTokenRequired:         "user token required but not provided",
+	UserTokenNotFound:         "user token not found",
+	UserTokenExpired:          "user token expired",
 	ClientForbidden:           "client access forbidden",
 	UserForbidden:             "user access forbidden",
 	UnknownScopeAccessibility: "unknown scope accessibility",
 	UserProviderNotConfigured: "user provider not configured",
 	DatabaseError:             "database error",
-	UserTokenExpired:          "user token expired",
 	InvalidCredentials:        "invalid credentials",
 }
 

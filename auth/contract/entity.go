@@ -53,8 +53,9 @@ type ApiUserInterface interface {
 	AddApiToken(apiToken ApiUserTokenInterface)
 	GetCurrentToken() ApiUserTokenInterface
 	GetUserScope() *AccessScope
-	GetLastLoginAt() time.Time
-	SetLastLoginAt(lastLoginAt time.Time)
+	GetLastLoginAt() *time.Time
+	SetLastLoginAt(lastLoginAt *time.Time)
+	GetPassword() string
 }
 type ApiUserTokenInterface interface {
 	SetToken(token string)
