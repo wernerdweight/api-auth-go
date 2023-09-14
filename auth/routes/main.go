@@ -1,13 +1,12 @@
 package routes
 
 import (
-	"crypto/rand"
 	"encoding/base64"
-	"encoding/hex"
 	"github.com/gin-gonic/gin"
 	"github.com/wernerdweight/api-auth-go/auth/config"
 	"github.com/wernerdweight/api-auth-go/auth/constants"
 	"github.com/wernerdweight/api-auth-go/auth/contract"
+	generator "github.com/wernerdweight/token-generator-go"
 	"net/http"
 	"strings"
 	"time"
@@ -30,19 +29,11 @@ func extractCredentials(header string) (string, string, *contract.AuthError) {
 	return credentials[0], credentials[1], nil
 }
 
-func generateToken(length int) string {
-	// TODO: replace this with some tokenizer that supports a predefined alphabet
-	b := make([]byte, length)
-	if _, err := rand.Read(b); err != nil {
-		return ""
-	}
-	// FIXME: this is producing an ugly output
-	return hex.EncodeToString(b)[0:length]
-}
-
 func createToken() contract.ApiUserTokenInterface {
+	tokenGenerator := generator.NewTokenGenerator("")
+	token := tokenGenerator.Generate(constants.DefaultTokenLength)
 	tokenClass := config.ProviderInstance.GetTokenFactory()()
-	tokenClass.SetToken(generateToken(constants.DefaultTokenLength))
+	tokenClass.SetToken(token)
 	tokenClass.SetExpirationDate(time.Now().Add(config.ProviderInstance.GetApiTokenExpirationInterval()))
 	return tokenClass
 }
