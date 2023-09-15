@@ -22,6 +22,8 @@ type UserConfig struct {
 	UseScopeAccessModel *bool
 	// AccessScopeChecker: the checker used to check scope access that implements AccessScopeCheckerInterface - defaults to PathAccessScopeChecker
 	AccessScopeChecker AccessScopeCheckerInterface
+	// WithRegistration: if set to true, user registration will be enabled - default false
+	WithRegistration *bool
 }
 
 type ModesConfig struct {

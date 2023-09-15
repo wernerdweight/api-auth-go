@@ -58,6 +58,10 @@ func (p *Provider) GetTokenFactory() func() contract.ApiUserTokenInterface {
 	return p.config.User.TokenFactory
 }
 
+func (p *Provider) IsUserRegistrationEnabled() bool {
+	return *p.config.User.WithRegistration
+}
+
 func (p *Provider) Init(config contract.Config) {
 	if nil != config.Client.Provider {
 		p.config.Client.Provider = config.Client.Provider
@@ -85,6 +89,9 @@ func (p *Provider) Init(config contract.Config) {
 		if nil != config.User.AccessScopeChecker {
 			p.config.User.AccessScopeChecker = config.User.AccessScopeChecker
 		}
+		if nil != config.User.WithRegistration {
+			p.config.User.WithRegistration = config.User.WithRegistration
+		}
 	}
 
 	if nil != config.Mode {
@@ -111,6 +118,7 @@ var (
 	defaultExcludeOptionsRequests    = false
 	defaultClientUseScopeAccessModel = false
 	defaultUserUseScopeAccessModel   = false
+	defaultWithRegistration          = false
 	defaultExpirationInterval        = time.Hour * 24 * 30
 )
 
@@ -127,6 +135,7 @@ var ProviderInstance = &Provider{
 			ApiTokenExpirationInterval: &defaultExpirationInterval,
 			UseScopeAccessModel:        &defaultUserUseScopeAccessModel,
 			AccessScopeChecker:         checker.PathAccessScopeChecker{},
+			WithRegistration:           &defaultWithRegistration,
 		},
 		Mode: &contract.ModesConfig{
 			ApiKey:            &defaultApiKeyMode,
