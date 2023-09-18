@@ -25,6 +25,8 @@ const (
 	UserProviderNotConfigured
 	DatabaseError
 	InvalidCredentials
+	InvalidRequest
+	UserAlreadyExists
 )
 
 var AuthErrorCodes = map[AuthErrorCode]string{
@@ -42,6 +44,8 @@ var AuthErrorCodes = map[AuthErrorCode]string{
 	UserProviderNotConfigured: "user provider not configured",
 	DatabaseError:             "database error",
 	InvalidCredentials:        "invalid credentials",
+	InvalidRequest:            "invalid request",
+	UserAlreadyExists:         "user already exists",
 }
 
 func NewAuthError(code AuthErrorCode, payload interface{}) *AuthError {
