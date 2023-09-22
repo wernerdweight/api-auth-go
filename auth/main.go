@@ -13,8 +13,8 @@ import (
 
 func Middleware(r *gin.Engine, c contract.Config) gin.HandlerFunc {
 	log.Println("setting up api-auth middleware...")
-	routes.Register(r)
 	config.ProviderInstance.Init(c)
+	routes.Register(r)
 
 	if !config.ProviderInstance.IsApiKeyModeEnabled() && !config.ProviderInstance.IsClientIdAndSecretModeEnabled() {
 		log.Println("api-auth is disabled")

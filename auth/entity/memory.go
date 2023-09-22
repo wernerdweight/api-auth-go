@@ -63,6 +63,26 @@ func (u *MemoryApiUser) GetPassword() string {
 	return u.Password
 }
 
+func (u *MemoryApiUser) SetPassword(password string) {
+	u.Password = password
+}
+
+func (u *MemoryApiUser) SetLogin(login string) {
+	u.Login = login
+}
+
+func (u *MemoryApiUser) SetConfirmationToken(confirmationToken string) {
+	// no-op
+}
+
+func (u *MemoryApiUser) SetConfirmationRequestedAt(confirmationRequestedAt time.Time) {
+	// no-op
+}
+
+func (u *MemoryApiUser) IsActive() bool {
+	return true
+}
+
 // MemoryApiUserToken is the simplest struct that implements ApiUserTokenInterface
 type MemoryApiUserToken struct {
 	Token          string

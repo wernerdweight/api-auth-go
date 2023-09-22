@@ -56,6 +56,16 @@ func (p MemoryApiUserProvider) ProvideByLoginAndPassword(login string, password 
 	return nil, contract.NewAuthError(contract.UserNotFound, nil)
 }
 
+func (p MemoryApiUserProvider) ProvideByLogin(login string) (contract.ApiUserInterface, *contract.AuthError) {
+	for _, user := range p.memory {
+		if user.Login == login {
+			return &user, nil
+		}
+	}
+
+	return nil, contract.NewAuthError(contract.UserNotFound, nil)
+}
+
 func (p MemoryApiUserProvider) ProvideByToken(token string) (contract.ApiUserInterface, *contract.AuthError) {
 	for _, user := range p.memory {
 		if user.CurrentToken.Token == token {
@@ -64,6 +74,13 @@ func (p MemoryApiUserProvider) ProvideByToken(token string) (contract.ApiUserInt
 	}
 
 	return nil, contract.NewAuthError(contract.UserNotFound, nil)
+}
+
+func (p MemoryApiUserProvider) ProvideNew(login string, encryptedPassword string) contract.ApiUserInterface {
+	return &entity.MemoryApiUser{
+		Login:    login,
+		Password: encryptedPassword,
+	}
 }
 
 func (p MemoryApiUserProvider) Save(client contract.ApiUserInterface) *contract.AuthError {

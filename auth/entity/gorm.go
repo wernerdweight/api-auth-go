@@ -39,14 +39,19 @@ func (c *GormApiClient) GetClientScope() *contract.AccessScope {
 
 // GormApiUser is a struct that implements ApiUserInterface for GORM
 type GormApiUser struct {
-	ID           uuid.UUID                      `gorm:"primaryKey;type:uuid;default:uuid_generate_v4()" json:"id"`
-	Login        string                         `json:"-"`
-	Password     string                         `json:"-"`
-	AccessScope  *contract.AccessScope          `gorm:"type:jsonb;serializer:json" json:"userScope"`
-	LastLoginAt  *time.Time                     `json:"lastLoginAt"`
-	CurrentToken contract.ApiUserTokenInterface `gorm:"-" json:"token"`
-	ApiTokens    []GormApiUserToken             `gorm:"foreignKey:ApiUserID" json:"-"`
-	CreatedAt    time.Time                      `gorm:"not null;default:CURRENT_TIMESTAMP" json:"-"`
+	ID                      uuid.UUID                      `gorm:"primaryKey;type:uuid;default:uuid_generate_v4()" json:"id"`
+	Login                   string                         `gorm:"column:email" json:"-"`
+	Password                string                         `json:"-"`
+	AccessScope             *contract.AccessScope          `gorm:"type:jsonb;serializer:json" json:"userScope"`
+	LastLoginAt             *time.Time                     `json:"lastLoginAt"`
+	CurrentToken            contract.ApiUserTokenInterface `gorm:"-" json:"token"`
+	ApiTokens               []GormApiUserToken             `gorm:"foreignKey:ApiUserID" json:"-"`
+	CreatedAt               time.Time                      `gorm:"not null;default:CURRENT_TIMESTAMP" json:"-"`
+	Active                  bool                           `gorm:"not null;default:false" json:"-"`
+	ConfirmationRequestedAt *time.Time                     `json:"-"`
+	ConfirmationToken       string                         `json:"-"`
+	ResetRequestedAt        *time.Time                     `json:"-"`
+	ResetToken              string                         `json:"-"`
 }
 
 func (u *GormApiUser) TableName() string {
@@ -81,6 +86,26 @@ func (u *GormApiUser) SetLastLoginAt(lastLoginAt *time.Time) {
 
 func (u *GormApiUser) GetPassword() string {
 	return u.Password
+}
+
+func (u *GormApiUser) SetPassword(password string) {
+	u.Password = password
+}
+
+func (u *GormApiUser) SetLogin(login string) {
+	u.Login = login
+}
+
+func (u *GormApiUser) SetConfirmationToken(confirmationToken string) {
+	u.ConfirmationToken = confirmationToken
+}
+
+func (u *GormApiUser) SetConfirmationRequestedAt(confirmationRequestedAt time.Time) {
+	u.ConfirmationRequestedAt = &confirmationRequestedAt
+}
+
+func (u *GormApiUser) IsActive() bool {
+	return u.Active
 }
 
 // GormApiUserToken is a struct that implements ApiUserTokenInterface for GORM

@@ -7,6 +7,8 @@ type ApiClientProviderInterface[T ApiClientInterface] interface {
 }
 type ApiUserProviderInterface[T ApiUserInterface] interface {
 	ProvideByLoginAndPassword(login string, password string) (ApiUserInterface, *AuthError)
+	ProvideByLogin(login string) (ApiUserInterface, *AuthError)
 	ProvideByToken(token string) (ApiUserInterface, *AuthError)
+	ProvideNew(login string, encryptedPassword string) ApiUserInterface
 	Save(user ApiUserInterface) *AuthError
 }

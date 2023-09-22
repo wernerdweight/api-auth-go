@@ -16,7 +16,7 @@ func extractCredentials(header string) (string, string, *contract.AuthError) {
 	encodedCredentials := header[len("Basic "):]
 	decodedCredentials, err := base64.StdEncoding.DecodeString(encodedCredentials)
 	if nil != err {
-		return "", "", contract.NewAuthError(contract.InvalidCredentials, map[string]error{"details": err})
+		return "", "", contract.NewAuthError(contract.InvalidCredentials, map[string]string{"details": err.Error()})
 	}
 	if !strings.Contains(string(decodedCredentials), ":") {
 		return "", "", contract.NewAuthError(contract.InvalidCredentials, nil)

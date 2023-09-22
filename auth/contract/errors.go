@@ -27,6 +27,8 @@ const (
 	InvalidCredentials
 	InvalidRequest
 	UserAlreadyExists
+	EncryptionError
+	UserNotActive
 )
 
 var AuthErrorCodes = map[AuthErrorCode]string{
@@ -46,6 +48,8 @@ var AuthErrorCodes = map[AuthErrorCode]string{
 	InvalidCredentials:        "invalid credentials",
 	InvalidRequest:            "invalid request",
 	UserAlreadyExists:         "user already exists",
+	EncryptionError:           "encryption error",
+	UserNotActive:             "user not active",
 }
 
 func NewAuthError(code AuthErrorCode, payload interface{}) *AuthError {

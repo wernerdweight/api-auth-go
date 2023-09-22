@@ -12,6 +12,7 @@ type ClientConfig struct {
 }
 
 type UserConfig struct {
+	// TODO: add ChainProider to allow multiple providers (fallback to next provider if previous one is a miss)
 	// Provider: your provider that implements ApiUserProviderInterface
 	Provider ApiUserProviderInterface[ApiUserInterface]
 	// TokenFactory: your token type that implements ApiUserTokenInterface

@@ -2,12 +2,12 @@ package provider
 
 import (
 	"errors"
+	"github.com/wernerdweight/api-auth-go/auth/constants"
 	"github.com/wernerdweight/api-auth-go/auth/contract"
+	"github.com/wernerdweight/api-auth-go/auth/encoder"
 	"github.com/wernerdweight/api-auth-go/auth/entity"
-	"golang.org/x/crypto/argon2"
-	"golang.org/x/crypto/bcrypt"
+	generator "github.com/wernerdweight/token-generator-go"
 	"gorm.io/gorm"
-	"log"
 	"time"
 )
 
@@ -28,7 +28,7 @@ func (p GormApiClientProvider) ProvideByIdAndSecret(id string, secret string) (c
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, contract.NewAuthError(contract.ClientNotFound, nil)
 		}
-		return nil, contract.NewAuthError(contract.DatabaseError, map[string]error{"details": result.Error})
+		return nil, contract.NewAuthError(contract.DatabaseError, map[string]string{"details": result.Error.Error()})
 	}
 	return apiClient, nil
 }
@@ -43,7 +43,7 @@ func (p GormApiClientProvider) ProvideByApiKey(apiKey string) (contract.ApiClien
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, contract.NewAuthError(contract.ClientNotFound, nil)
 		}
-		return nil, contract.NewAuthError(contract.DatabaseError, map[string]error{"details": result.Error})
+		return nil, contract.NewAuthError(contract.DatabaseError, map[string]string{"details": result.Error.Error()})
 	}
 	return apiClient, nil
 }
@@ -52,7 +52,7 @@ func (p GormApiClientProvider) Save(client contract.ApiClientInterface) *contrac
 	conn := p.getConnection()
 	result := conn.Save(client)
 	if nil != result.Error {
-		return contract.NewAuthError(contract.DatabaseError, map[string]error{"details": result.Error})
+		return contract.NewAuthError(contract.DatabaseError, map[string]string{"details": result.Error.Error()})
 	}
 	return nil
 }
@@ -72,6 +72,21 @@ type GormApiUserProvider struct {
 }
 
 func (p GormApiUserProvider) ProvideByLoginAndPassword(login string, password string) (contract.ApiUserInterface, *contract.AuthError) {
+	apiUser, err := p.ProvideByLogin(login)
+	if nil != err {
+		return nil, err
+	}
+	err = encoder.ComparePassword(apiUser, password)
+	if nil != err {
+		return nil, err
+	}
+	if !apiUser.IsActive() {
+		return nil, contract.NewAuthError(contract.UserNotActive, nil)
+	}
+	return apiUser, nil
+}
+
+func (p GormApiUserProvider) ProvideByLogin(login string) (contract.ApiUserInterface, *contract.AuthError) {
 	apiUser := p.newApiUser()
 	conn := p.getConnection()
 	result := conn.First(&apiUser, entity.GormApiUser{
@@ -81,15 +96,7 @@ func (p GormApiUserProvider) ProvideByLoginAndPassword(login string, password st
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, contract.NewAuthError(contract.UserNotFound, nil)
 		}
-		return nil, contract.NewAuthError(contract.DatabaseError, map[string]error{"details": result.Error})
-	}
-	encryptedPassword := apiUser.GetPassword()
-	err := bcrypt.CompareHashAndPassword([]byte(encryptedPassword), []byte(password))
-	if nil != err {
-		argonPassword := argon2.IDKey([]byte(password), []byte(""), 1, 64*1024, 4, 32)
-		if string(argonPassword) != encryptedPassword {
-			return nil, contract.NewAuthError(contract.InvalidCredentials, nil)
-		}
+		return nil, contract.NewAuthError(contract.DatabaseError, map[string]string{"details": result.Error.Error()})
 	}
 	return apiUser, nil
 }
@@ -104,20 +111,28 @@ func (p GormApiUserProvider) ProvideByToken(token string) (contract.ApiUserInter
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, contract.NewAuthError(contract.UserTokenNotFound, nil)
 		}
-		return nil, contract.NewAuthError(contract.DatabaseError, map[string]error{"details": result.Error})
+		return nil, contract.NewAuthError(contract.DatabaseError, map[string]string{"details": result.Error.Error()})
 	}
-	if apiUserToken.GetExpirationDate().After(time.Now()) {
+	if apiUserToken.GetExpirationDate().Before(time.Now()) {
 		return nil, contract.NewAuthError(contract.UserTokenExpired, map[string]time.Time{"expiredAt": apiUserToken.GetExpirationDate()})
 	}
 	return apiUserToken.GetApiUser(), nil
 }
 
+func (p GormApiUserProvider) ProvideNew(login string, encryptedPassword string) contract.ApiUserInterface {
+	apiUser := p.newApiUser()
+	apiUser.SetLogin(login)
+	apiUser.SetPassword(encryptedPassword)
+	apiUser.SetConfirmationToken(generator.NewTokenGenerator("").Generate(constants.DefaultTokenLength))
+	apiUser.SetConfirmationRequestedAt(time.Now())
+	return apiUser
+}
+
 func (p GormApiUserProvider) Save(user contract.ApiUserInterface) *contract.AuthError {
 	conn := p.getConnection()
 	result := conn.Save(user)
-	log.Printf("Save user: %v", user)
 	if nil != result.Error {
-		return contract.NewAuthError(contract.DatabaseError, map[string]error{"details": result.Error})
+		return contract.NewAuthError(contract.DatabaseError, map[string]string{"details": result.Error.Error()})
 	}
 	return nil
 }
