@@ -12,7 +12,7 @@ type ClientConfig struct {
 }
 
 type UserConfig struct {
-	// TODO: add ChainProider to allow multiple providers (fallback to next provider if previous one is a miss)
+	// TODO: add ChainProvider to allow multiple providers (fallback to next provider if previous one is a miss)
 	// Provider: your provider that implements ApiUserProviderInterface
 	Provider ApiUserProviderInterface[ApiUserInterface]
 	// TokenFactory: your token type that implements ApiUserTokenInterface
@@ -25,6 +25,8 @@ type UserConfig struct {
 	AccessScopeChecker AccessScopeCheckerInterface
 	// WithRegistration: if set to true, user registration will be enabled - default false
 	WithRegistration *bool
+	// ConfirmationTokenExpirationInterval: confirmation token expiration in seconds - defaults to 43200 (12 hours)
+	ConfirmationTokenExpirationInterval *time.Duration
 }
 
 type ModesConfig struct {

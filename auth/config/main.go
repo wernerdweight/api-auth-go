@@ -62,6 +62,10 @@ func (p *Provider) IsUserRegistrationEnabled() bool {
 	return *p.config.User.WithRegistration
 }
 
+func (p *Provider) GetConfirmationTokenExpirationInterval() time.Duration {
+	return *p.config.User.ConfirmationTokenExpirationInterval
+}
+
 func (p *Provider) Init(config contract.Config) {
 	if nil != config.Client.Provider {
 		p.config.Client.Provider = config.Client.Provider
@@ -92,6 +96,9 @@ func (p *Provider) Init(config contract.Config) {
 		if nil != config.User.WithRegistration {
 			p.config.User.WithRegistration = config.User.WithRegistration
 		}
+		if nil != config.User.ConfirmationTokenExpirationInterval {
+			p.config.User.ConfirmationTokenExpirationInterval = config.User.ConfirmationTokenExpirationInterval
+		}
 	}
 
 	if nil != config.Mode {
@@ -113,13 +120,14 @@ func (p *Provider) Init(config contract.Config) {
 }
 
 var (
-	defaultApiKeyMode                = false
-	defaultClientIdAndSecretMode     = true
-	defaultExcludeOptionsRequests    = false
-	defaultClientUseScopeAccessModel = false
-	defaultUserUseScopeAccessModel   = false
-	defaultWithRegistration          = false
-	defaultExpirationInterval        = time.Hour * 24 * 30
+	defaultApiKeyMode                     = false
+	defaultClientIdAndSecretMode          = true
+	defaultExcludeOptionsRequests         = false
+	defaultClientUseScopeAccessModel      = false
+	defaultUserUseScopeAccessModel        = false
+	defaultWithRegistration               = false
+	defaultExpirationInterval             = time.Hour * 24 * 30
+	defaultConfirmationExpirationInterval = time.Hour * 12
 )
 
 var ProviderInstance = &Provider{
@@ -130,12 +138,13 @@ var ProviderInstance = &Provider{
 			AccessScopeChecker:  checker.PathAccessScopeChecker{},
 		},
 		User: &contract.UserConfig{
-			Provider:                   nil,
-			TokenFactory:               nil,
-			ApiTokenExpirationInterval: &defaultExpirationInterval,
-			UseScopeAccessModel:        &defaultUserUseScopeAccessModel,
-			AccessScopeChecker:         checker.PathAccessScopeChecker{},
-			WithRegistration:           &defaultWithRegistration,
+			Provider:                            nil,
+			TokenFactory:                        nil,
+			ApiTokenExpirationInterval:          &defaultExpirationInterval,
+			UseScopeAccessModel:                 &defaultUserUseScopeAccessModel,
+			AccessScopeChecker:                  checker.PathAccessScopeChecker{},
+			WithRegistration:                    &defaultWithRegistration,
+			ConfirmationTokenExpirationInterval: &defaultConfirmationExpirationInterval,
 		},
 		Mode: &contract.ModesConfig{
 			ApiKey:            &defaultApiKeyMode,

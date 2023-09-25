@@ -58,9 +58,11 @@ type ApiUserInterface interface {
 	GetPassword() string
 	SetPassword(password string)
 	SetLogin(login string)
-	SetConfirmationToken(confirmationToken string)
-	SetConfirmationRequestedAt(confirmationRequestedAt time.Time)
+	SetConfirmationToken(confirmationToken *string)
+	GetConfirmationRequestedAt() *time.Time
+	SetConfirmationRequestedAt(confirmationRequestedAt *time.Time)
 	IsActive() bool
+	SetActive(active bool)
 }
 type ApiUserTokenInterface interface {
 	SetToken(token string)

@@ -29,6 +29,7 @@ const (
 	UserAlreadyExists
 	EncryptionError
 	UserNotActive
+	ConfirmationTokenExpired
 )
 
 var AuthErrorCodes = map[AuthErrorCode]string{
@@ -50,6 +51,7 @@ var AuthErrorCodes = map[AuthErrorCode]string{
 	UserAlreadyExists:         "user already exists",
 	EncryptionError:           "encryption error",
 	UserNotActive:             "user not active",
+	ConfirmationTokenExpired:  "confirmation token expired",
 }
 
 func NewAuthError(code AuthErrorCode, payload interface{}) *AuthError {

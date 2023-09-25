@@ -31,11 +31,12 @@ func (c *MemoryApiClient) GetClientScope() *contract.AccessScope {
 
 // MemoryApiUser is the simplest struct that implements ApiUserInterface
 type MemoryApiUser struct {
-	Id           string
-	Login        string
-	Password     string
-	CurrentToken *MemoryApiUserToken
-	AccessScope  *contract.AccessScope
+	Id                string
+	Login             string
+	Password          string
+	CurrentToken      *MemoryApiUserToken
+	AccessScope       *contract.AccessScope
+	ConfirmationToken string
 }
 
 func (u *MemoryApiUser) AddApiToken(apiToken contract.ApiUserTokenInterface) {
@@ -71,16 +72,25 @@ func (u *MemoryApiUser) SetLogin(login string) {
 	u.Login = login
 }
 
-func (u *MemoryApiUser) SetConfirmationToken(confirmationToken string) {
+func (u *MemoryApiUser) SetConfirmationToken(confirmationToken *string) {
 	// no-op
 }
 
-func (u *MemoryApiUser) SetConfirmationRequestedAt(confirmationRequestedAt time.Time) {
+func (u *MemoryApiUser) GetConfirmationRequestedAt() *time.Time {
+	confirmationRequestedAt := time.Now()
+	return &confirmationRequestedAt
+}
+
+func (u *MemoryApiUser) SetConfirmationRequestedAt(confirmationRequestedAt *time.Time) {
 	// no-op
 }
 
 func (u *MemoryApiUser) IsActive() bool {
 	return true
+}
+
+func (u *MemoryApiUser) SetActive(active bool) {
+	// no-op
 }
 
 // MemoryApiUserToken is the simplest struct that implements ApiUserTokenInterface

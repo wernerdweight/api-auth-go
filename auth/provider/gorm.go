@@ -2,6 +2,7 @@ package provider
 
 import (
 	"errors"
+	"github.com/wernerdweight/api-auth-go/auth/config"
 	"github.com/wernerdweight/api-auth-go/auth/constants"
 	"github.com/wernerdweight/api-auth-go/auth/contract"
 	"github.com/wernerdweight/api-auth-go/auth/encoder"
@@ -119,12 +120,35 @@ func (p GormApiUserProvider) ProvideByToken(token string) (contract.ApiUserInter
 	return apiUserToken.GetApiUser(), nil
 }
 
+func (p GormApiUserProvider) ProvideByConfirmationToken(token string) (contract.ApiUserInterface, *contract.AuthError) {
+	apiUser := p.newApiUser()
+	conn := p.getConnection()
+	result := conn.First(&apiUser, entity.GormApiUser{
+		ConfirmationToken: &token,
+	})
+	if nil != result.Error {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, contract.NewAuthError(contract.UserNotFound, nil)
+		}
+		return nil, contract.NewAuthError(contract.DatabaseError, map[string]string{"details": result.Error.Error()})
+	}
+	// check token expiration
+	expirationInterval := config.ProviderInstance.GetConfirmationTokenExpirationInterval()
+	expiresAt := apiUser.GetConfirmationRequestedAt().Add(expirationInterval)
+	if expiresAt.Before(time.Now()) {
+		return nil, contract.NewAuthError(contract.ConfirmationTokenExpired, map[string]time.Time{"expiredAt": expiresAt})
+	}
+	return apiUser, nil
+}
+
 func (p GormApiUserProvider) ProvideNew(login string, encryptedPassword string) contract.ApiUserInterface {
+	token := generator.NewTokenGenerator("").Generate(constants.DefaultTokenLength)
+	now := time.Now()
 	apiUser := p.newApiUser()
 	apiUser.SetLogin(login)
 	apiUser.SetPassword(encryptedPassword)
-	apiUser.SetConfirmationToken(generator.NewTokenGenerator("").Generate(constants.DefaultTokenLength))
-	apiUser.SetConfirmationRequestedAt(time.Now())
+	apiUser.SetConfirmationToken(&token)
+	apiUser.SetConfirmationRequestedAt(&now)
 	return apiUser
 }
 

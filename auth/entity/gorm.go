@@ -49,7 +49,7 @@ type GormApiUser struct {
 	CreatedAt               time.Time                      `gorm:"not null;default:CURRENT_TIMESTAMP" json:"-"`
 	Active                  bool                           `gorm:"not null;default:false" json:"-"`
 	ConfirmationRequestedAt *time.Time                     `json:"-"`
-	ConfirmationToken       string                         `json:"-"`
+	ConfirmationToken       *string                        `json:"-"`
 	ResetRequestedAt        *time.Time                     `json:"-"`
 	ResetToken              string                         `json:"-"`
 }
@@ -96,16 +96,24 @@ func (u *GormApiUser) SetLogin(login string) {
 	u.Login = login
 }
 
-func (u *GormApiUser) SetConfirmationToken(confirmationToken string) {
+func (u *GormApiUser) SetConfirmationToken(confirmationToken *string) {
 	u.ConfirmationToken = confirmationToken
 }
 
-func (u *GormApiUser) SetConfirmationRequestedAt(confirmationRequestedAt time.Time) {
-	u.ConfirmationRequestedAt = &confirmationRequestedAt
+func (u *GormApiUser) GetConfirmationRequestedAt() *time.Time {
+	return u.ConfirmationRequestedAt
+}
+
+func (u *GormApiUser) SetConfirmationRequestedAt(confirmationRequestedAt *time.Time) {
+	u.ConfirmationRequestedAt = confirmationRequestedAt
 }
 
 func (u *GormApiUser) IsActive() bool {
 	return u.Active
+}
+
+func (u *GormApiUser) SetActive(active bool) {
+	u.Active = active
 }
 
 // GormApiUserToken is a struct that implements ApiUserTokenInterface for GORM

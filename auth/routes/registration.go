@@ -141,10 +141,52 @@ func registrationRequestHandler(c *gin.Context) {
 }
 
 func registrationConfirmHandler(c *gin.Context) {
-	// TODO: get token from request params
-	// TODO: validate token
-	// TODO: activate user
-	// TODO: call external service to set user details and other fields (event)
-	// TODO: save user
-	// TODO: issue registration confirmed event
+	token := c.Param("token")
+
+	provider := config.ProviderInstance.GetUserProvider()
+	apiUser, authErr := provider.ProvideByConfirmationToken(token)
+	if nil != authErr {
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+			"code":    authErr.Code,
+			"error":   authErr.Err.Error(),
+			"payload": authErr.Payload,
+		})
+		return
+	}
+
+	apiUser.SetActive(true)
+	apiUser.SetConfirmationToken(nil)
+	apiUser.SetConfirmationRequestedAt(nil)
+
+	// call external service to set user details and other fields (event)
+	err := events.GetEventHub().DispatchSync(&contract.ActivateApiUserEvent{
+		ApiUser: apiUser,
+	})
+	if nil != err {
+		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
+			"code":    contract.InvalidRequest,
+			"error":   contract.AuthErrorCodes[contract.InvalidRequest],
+			"payload": map[string]string{"details": err.Error()},
+		})
+		return
+	}
+
+	authErr = provider.Save(apiUser)
+	if nil != authErr {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"code":    authErr.Code,
+			"error":   authErr.Err.Error(),
+			"payload": authErr.Payload,
+		})
+		return
+	}
+
+	// issue registration confirmed event
+	events.GetEventHub().DispatchAsync(&contract.RegistrationConfirmationCompletedEvent{
+		ApiUser: apiUser,
+	})
+
+	c.JSON(http.StatusOK, gin.H{
+		"status": "ok",
+	})
 }

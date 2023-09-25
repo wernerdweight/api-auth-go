@@ -5,9 +5,11 @@ import (
 )
 
 const (
-	ValidateLoginInformationEventKey     = "api-auth-go.validate-login-information"
-	CreateNewApiUserEventKey             = "api-auth-go.create-new-api-user"
-	RegistrationRequestCompletedEventKey = "api-auth-go.registration-request-completed"
+	ValidateLoginInformationEventKey          = "api-auth-go.validate-login-information"
+	CreateNewApiUserEventKey                  = "api-auth-go.create-new-api-user"
+	RegistrationRequestCompletedEventKey      = "api-auth-go.registration-request-completed"
+	ActivateApiUserEventKey                   = "api-auth-go.activate-api-user"
+	RegistrationConfirmationCompletedEventKey = "api-auth-go.registration-confirmation-completed"
 )
 
 type ValidateLoginInformationEvent struct {
@@ -44,5 +46,29 @@ func (event *RegistrationRequestCompletedEvent) GetKey() events.EventKey {
 }
 
 func (event *RegistrationRequestCompletedEvent) GetPayload() events.EventPayload {
+	return event
+}
+
+type ActivateApiUserEvent struct {
+	ApiUser ApiUserInterface
+}
+
+func (event *ActivateApiUserEvent) GetKey() events.EventKey {
+	return ActivateApiUserEventKey
+}
+
+func (event *ActivateApiUserEvent) GetPayload() events.EventPayload {
+	return event
+}
+
+type RegistrationConfirmationCompletedEvent struct {
+	ApiUser ApiUserInterface
+}
+
+func (event *RegistrationConfirmationCompletedEvent) GetKey() events.EventKey {
+	return RegistrationConfirmationCompletedEventKey
+}
+
+func (event *RegistrationConfirmationCompletedEvent) GetPayload() events.EventPayload {
 	return event
 }
