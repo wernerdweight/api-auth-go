@@ -16,6 +16,14 @@ func Middleware(r *gin.Engine, c contract.Config) gin.HandlerFunc {
 	config.ProviderInstance.Init(c)
 	routes.Register(r)
 
+	if config.ProviderInstance.IsCacheEnabled() {
+		log.Println("initializing cache driver...")
+		config.ProviderInstance.GetCacheDriver().Init(
+			config.ProviderInstance.GetCachePrefix(),
+			config.ProviderInstance.GetCacheTTL(),
+		)
+	}
+
 	if !config.ProviderInstance.IsApiKeyModeEnabled() && !config.ProviderInstance.IsClientIdAndSecretModeEnabled() {
 		log.Println("api-auth is disabled")
 		return func(c *gin.Context) {

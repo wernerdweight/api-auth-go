@@ -35,19 +35,49 @@ func shouldAuthenticateByApiKey(c *gin.Context) bool {
 func authenticateApiClient(c *gin.Context) (contract.ApiClientInterface, *contract.AuthError) {
 	apiClientProvider := config.ProviderInstance.GetClientProvider()
 	if shouldAuthenticateByApiClientAndUser(c) {
-		apiClient, err := apiClientProvider.ProvideByIdAndSecret(
-			c.Request.Header.Get(constants.ClientIdHeader),
-			c.Request.Header.Get(constants.ClientSecretHeader),
-		)
+		clientId := c.Request.Header.Get(constants.ClientIdHeader)
+		clientSecret := c.Request.Header.Get(constants.ClientSecretHeader)
+		if config.ProviderInstance.IsCacheEnabled() {
+			apiClient, err := config.ProviderInstance.GetCacheDriver().GetApiClientByIdAndSecret(clientId, clientSecret)
+			if nil != apiClient {
+				return apiClient, nil
+			}
+			if nil != err {
+				log.Printf("can't get api client from cache: %v", err)
+			}
+		}
+		apiClient, err := apiClientProvider.ProvideByIdAndSecret(clientId, clientSecret)
 		if nil != err {
 			return nil, err
+		}
+		if config.ProviderInstance.IsCacheEnabled() {
+			err = config.ProviderInstance.GetCacheDriver().SetApiClientByIdAndSecret(clientId, clientSecret, apiClient)
+			if nil != err {
+				log.Printf("can't set api client to cache: %v", err)
+			}
 		}
 		return apiClient, nil
 	}
 	if shouldAuthenticateByApiKey(c) {
-		apiClient, err := apiClientProvider.ProvideByApiKey(c.Request.Header.Get(constants.ApiKeyHeader))
+		apiKey := c.Request.Header.Get(constants.ApiKeyHeader)
+		if config.ProviderInstance.IsCacheEnabled() {
+			apiClient, err := config.ProviderInstance.GetCacheDriver().GetApiClientByApiKey(apiKey)
+			if nil != apiClient {
+				return apiClient, nil
+			}
+			if nil != err {
+				log.Printf("can't get api client from cache: %v", err)
+			}
+		}
+		apiClient, err := apiClientProvider.ProvideByApiKey(apiKey)
 		if nil != err {
 			return nil, err
+		}
+		if config.ProviderInstance.IsCacheEnabled() {
+			err = config.ProviderInstance.GetCacheDriver().SetApiClientByApiKey(apiKey, apiClient)
+			if nil != err {
+				log.Printf("can't set api client to cache: %v", err)
+			}
 		}
 		return apiClient, nil
 	}
@@ -58,13 +88,30 @@ func authenticateApiUser(c *gin.Context) (contract.ApiUserInterface, *contract.A
 	if c.Request.Header.Get(constants.ApiUserTokenHeader) == "" {
 		return nil, contract.NewAuthError(contract.UserTokenRequired, nil)
 	}
+	// TODO: check cache first (if enabled)
+	apiToken := c.Request.Header.Get(constants.ApiUserTokenHeader)
+	if config.ProviderInstance.IsCacheEnabled() {
+		apiUser, err := config.ProviderInstance.GetCacheDriver().GetApiUserByToken(apiToken)
+		if nil != apiUser {
+			return apiUser, nil
+		}
+		if nil != err {
+			log.Printf("can't get api user from cache: %v", err)
+		}
+	}
 	apiUserProvider := config.ProviderInstance.GetUserProvider()
 	if nil == apiUserProvider {
 		return nil, contract.NewAuthError(contract.UserProviderNotConfigured, nil)
 	}
-	apiUser, err := apiUserProvider.ProvideByToken(c.Request.Header.Get(constants.ApiUserTokenHeader))
+	apiUser, err := apiUserProvider.ProvideByToken(apiToken)
 	if nil != err {
 		return nil, err
+	}
+	if config.ProviderInstance.IsCacheEnabled() {
+		err = config.ProviderInstance.GetCacheDriver().SetApiUserByToken(apiToken, apiUser)
+		if nil != err {
+			log.Printf("can't set api user to cache: %v", err)
+		}
 	}
 	return apiUser, nil
 }

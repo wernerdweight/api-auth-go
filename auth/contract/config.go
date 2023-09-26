@@ -36,6 +36,15 @@ type ModesConfig struct {
 	ClientIdAndSecret *bool
 }
 
+type CacheConfig struct {
+	// Driver: your cache driver that implements CacheDriverInterface
+	Driver CacheDriverInterface
+	// Prefix: prefix to use for cache keys - defaults to `api-auth-go:`
+	Prefix *string
+	// TTL: cache TTL in seconds - defaults to 3600 (1 hour)
+	TTL *time.Duration
+}
+
 type Config struct {
 	// Client: api client configuration (mandatory)
 	Client ClientConfig
@@ -54,4 +63,7 @@ type Config struct {
 
 	// ExcludeOptionsRequests: if true, requests using the OPTIONS method will be ignored (authentication will be skipped) - default false
 	ExcludeOptionsRequests *bool
+
+	// Cache: cache configuration (optional)
+	Cache *CacheConfig
 }

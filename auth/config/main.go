@@ -66,6 +66,22 @@ func (p *Provider) GetConfirmationTokenExpirationInterval() time.Duration {
 	return *p.config.User.ConfirmationTokenExpirationInterval
 }
 
+func (p *Provider) GetCacheDriver() contract.CacheDriverInterface {
+	return p.config.Cache.Driver
+}
+
+func (p *Provider) GetCachePrefix() string {
+	return *p.config.Cache.Prefix
+}
+
+func (p *Provider) GetCacheTTL() time.Duration {
+	return *p.config.Cache.TTL
+}
+
+func (p *Provider) IsCacheEnabled() bool {
+	return nil != p.config.Cache.Driver
+}
+
 func (p *Provider) initUser(config contract.Config) {
 	if nil != config.User.Provider {
 		p.config.User.Provider = config.User.Provider
@@ -90,6 +106,27 @@ func (p *Provider) initUser(config contract.Config) {
 	}
 }
 
+func (p *Provider) initMode(config contract.Config) {
+	if nil != config.Mode.ApiKey {
+		p.config.Mode.ApiKey = config.Mode.ApiKey
+	}
+	if nil != config.Mode.ClientIdAndSecret {
+		p.config.Mode.ClientIdAndSecret = config.Mode.ClientIdAndSecret
+	}
+}
+
+func (p *Provider) initCache(config contract.Config) {
+	if nil != config.Cache.Driver {
+		p.config.Cache.Driver = config.Cache.Driver
+	}
+	if nil != config.Cache.Prefix && "" != *config.Cache.Prefix {
+		p.config.Cache.Prefix = config.Cache.Prefix
+	}
+	if nil != config.Cache.TTL {
+		p.config.Cache.TTL = config.Cache.TTL
+	}
+}
+
 func (p *Provider) Init(config contract.Config) {
 	if nil != config.Client.Provider {
 		p.config.Client.Provider = config.Client.Provider
@@ -106,12 +143,7 @@ func (p *Provider) Init(config contract.Config) {
 	}
 
 	if nil != config.Mode {
-		if nil != config.Mode.ApiKey {
-			p.config.Mode.ApiKey = config.Mode.ApiKey
-		}
-		if nil != config.Mode.ClientIdAndSecret {
-			p.config.Mode.ClientIdAndSecret = config.Mode.ClientIdAndSecret
-		}
+		p.initMode(config)
 	}
 
 	if nil != config.TargetHandlers {
@@ -120,6 +152,10 @@ func (p *Provider) Init(config contract.Config) {
 
 	if nil != config.ExcludeOptionsRequests {
 		p.config.ExcludeOptionsRequests = config.ExcludeOptionsRequests
+	}
+
+	if nil != config.Cache {
+		p.initCache(config)
 	}
 }
 
@@ -132,6 +168,8 @@ var (
 	defaultWithRegistration               = false
 	defaultExpirationInterval             = time.Hour * 24 * 30
 	defaultConfirmationExpirationInterval = time.Hour * 12
+	defaultCacheTTL                       = time.Hour
+	defaultCachePrefix                    = "api-auth-go:"
 )
 
 var ProviderInstance = &Provider{
@@ -156,5 +194,10 @@ var ProviderInstance = &Provider{
 		},
 		TargetHandlers:         nil,
 		ExcludeOptionsRequests: &defaultExcludeOptionsRequests,
+		Cache: &contract.CacheConfig{
+			Driver: nil,
+			Prefix: &defaultCachePrefix,
+			TTL:    &defaultCacheTTL,
+		},
 	},
 }
