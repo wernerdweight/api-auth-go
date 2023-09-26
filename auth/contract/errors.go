@@ -32,6 +32,7 @@ const (
 	ConfirmationTokenExpired
 	ResettingAlreadyRequested
 	ResetTokenExpired
+	CacheError
 )
 
 var AuthErrorCodes = map[AuthErrorCode]string{
@@ -56,6 +57,7 @@ var AuthErrorCodes = map[AuthErrorCode]string{
 	ConfirmationTokenExpired:  "confirmation token expired",
 	ResettingAlreadyRequested: "resetting already requested",
 	ResetTokenExpired:         "reset token expired",
+	CacheError:                "cache error",
 }
 
 func NewAuthError(code AuthErrorCode, payload interface{}) *AuthError {
