@@ -10,6 +10,10 @@ const (
 	RegistrationRequestCompletedEventKey      = "api-auth-go.registration-request-completed"
 	ActivateApiUserEventKey                   = "api-auth-go.activate-api-user"
 	RegistrationConfirmationCompletedEventKey = "api-auth-go.registration-confirmation-completed"
+	RequestResetApiUserPasswordEventKey       = "api-auth-go.request-reset-api-user-password"
+	ResetApiUserPasswordEventKey              = "api-auth-go.reset-api-user-password"
+	ResettingRequestCompletedEventKey         = "api-auth-go.resetting-request-completed"
+	ResettingCompletedEventKey                = "api-auth-go.resetting-completed"
 )
 
 type ValidateLoginInformationEvent struct {
@@ -70,5 +74,53 @@ func (event *RegistrationConfirmationCompletedEvent) GetKey() events.EventKey {
 }
 
 func (event *RegistrationConfirmationCompletedEvent) GetPayload() events.EventPayload {
+	return event
+}
+
+type RequestResetApiUserPasswordEvent struct {
+	ApiUser ApiUserInterface
+}
+
+func (event *RequestResetApiUserPasswordEvent) GetKey() events.EventKey {
+	return RequestResetApiUserPasswordEventKey
+}
+
+func (event *RequestResetApiUserPasswordEvent) GetPayload() events.EventPayload {
+	return event
+}
+
+type ResetApiUserPasswordEvent struct {
+	ApiUser ApiUserInterface
+}
+
+func (event *ResetApiUserPasswordEvent) GetKey() events.EventKey {
+	return ResetApiUserPasswordEventKey
+}
+
+func (event *ResetApiUserPasswordEvent) GetPayload() events.EventPayload {
+	return event
+}
+
+type ResettingRequestCompletedEvent struct {
+	ApiUser ApiUserInterface
+}
+
+func (event *ResettingRequestCompletedEvent) GetKey() events.EventKey {
+	return ResettingRequestCompletedEventKey
+}
+
+func (event *ResettingRequestCompletedEvent) GetPayload() events.EventPayload {
+	return event
+}
+
+type ResettingCompletedEvent struct {
+	ApiUser ApiUserInterface
+}
+
+func (event *ResettingCompletedEvent) GetKey() events.EventKey {
+	return ResettingCompletedEventKey
+}
+
+func (event *ResettingCompletedEvent) GetPayload() events.EventPayload {
 	return event
 }

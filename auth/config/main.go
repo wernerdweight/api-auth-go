@@ -66,6 +66,30 @@ func (p *Provider) GetConfirmationTokenExpirationInterval() time.Duration {
 	return *p.config.User.ConfirmationTokenExpirationInterval
 }
 
+func (p *Provider) initUser(config contract.Config) {
+	if nil != config.User.Provider {
+		p.config.User.Provider = config.User.Provider
+	}
+	if nil != config.User.TokenFactory {
+		p.config.User.TokenFactory = config.User.TokenFactory
+	}
+	if nil != config.User.ApiTokenExpirationInterval {
+		p.config.User.ApiTokenExpirationInterval = config.User.ApiTokenExpirationInterval
+	}
+	if nil != config.User.UseScopeAccessModel {
+		p.config.User.UseScopeAccessModel = config.User.UseScopeAccessModel
+	}
+	if nil != config.User.AccessScopeChecker {
+		p.config.User.AccessScopeChecker = config.User.AccessScopeChecker
+	}
+	if nil != config.User.WithRegistration {
+		p.config.User.WithRegistration = config.User.WithRegistration
+	}
+	if nil != config.User.ConfirmationTokenExpirationInterval {
+		p.config.User.ConfirmationTokenExpirationInterval = config.User.ConfirmationTokenExpirationInterval
+	}
+}
+
 func (p *Provider) Init(config contract.Config) {
 	if nil != config.Client.Provider {
 		p.config.Client.Provider = config.Client.Provider
@@ -78,27 +102,7 @@ func (p *Provider) Init(config contract.Config) {
 	}
 
 	if nil != config.User {
-		if nil != config.User.Provider {
-			p.config.User.Provider = config.User.Provider
-		}
-		if nil != config.User.TokenFactory {
-			p.config.User.TokenFactory = config.User.TokenFactory
-		}
-		if nil != config.User.ApiTokenExpirationInterval {
-			p.config.User.ApiTokenExpirationInterval = config.User.ApiTokenExpirationInterval
-		}
-		if nil != config.User.UseScopeAccessModel {
-			p.config.User.UseScopeAccessModel = config.User.UseScopeAccessModel
-		}
-		if nil != config.User.AccessScopeChecker {
-			p.config.User.AccessScopeChecker = config.User.AccessScopeChecker
-		}
-		if nil != config.User.WithRegistration {
-			p.config.User.WithRegistration = config.User.WithRegistration
-		}
-		if nil != config.User.ConfirmationTokenExpirationInterval {
-			p.config.User.ConfirmationTokenExpirationInterval = config.User.ConfirmationTokenExpirationInterval
-		}
+		p.initUser(config)
 	}
 
 	if nil != config.Mode {

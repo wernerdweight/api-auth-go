@@ -105,7 +105,7 @@ func (p GormApiUserProvider) ProvideByLogin(login string) (contract.ApiUserInter
 func (p GormApiUserProvider) ProvideByToken(token string) (contract.ApiUserInterface, *contract.AuthError) {
 	apiUserToken := p.newApiUserToken()
 	conn := p.getConnection()
-	result := conn.First(&apiUserToken, entity.GormApiUserToken{
+	result := conn.Joins("ApiUser").First(&apiUserToken, entity.GormApiUserToken{
 		Token: token,
 	})
 	if nil != result.Error {
@@ -137,6 +137,27 @@ func (p GormApiUserProvider) ProvideByConfirmationToken(token string) (contract.
 	expiresAt := apiUser.GetConfirmationRequestedAt().Add(expirationInterval)
 	if expiresAt.Before(time.Now()) {
 		return nil, contract.NewAuthError(contract.ConfirmationTokenExpired, map[string]time.Time{"expiredAt": expiresAt})
+	}
+	return apiUser, nil
+}
+
+func (p GormApiUserProvider) ProvideByResetToken(token string) (contract.ApiUserInterface, *contract.AuthError) {
+	apiUser := p.newApiUser()
+	conn := p.getConnection()
+	result := conn.First(&apiUser, entity.GormApiUser{
+		ResetToken: &token,
+	})
+	if nil != result.Error {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, contract.NewAuthError(contract.UserNotFound, nil)
+		}
+		return nil, contract.NewAuthError(contract.DatabaseError, map[string]string{"details": result.Error.Error()})
+	}
+	// check token expiration
+	expirationInterval := config.ProviderInstance.GetConfirmationTokenExpirationInterval()
+	expiresAt := apiUser.GetResetRequestedAt().Add(expirationInterval)
+	if expiresAt.Before(time.Now()) {
+		return nil, contract.NewAuthError(contract.ResetTokenExpired, map[string]time.Time{"expiredAt": expiresAt})
 	}
 	return apiUser, nil
 }

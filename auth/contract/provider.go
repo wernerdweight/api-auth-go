@@ -10,6 +10,7 @@ type ApiUserProviderInterface[T ApiUserInterface] interface {
 	ProvideByLogin(login string) (ApiUserInterface, *AuthError)
 	ProvideByToken(token string) (ApiUserInterface, *AuthError)
 	ProvideByConfirmationToken(token string) (ApiUserInterface, *AuthError)
+	ProvideByResetToken(token string) (ApiUserInterface, *AuthError)
 	ProvideNew(login string, encryptedPassword string) ApiUserInterface
 	Save(user ApiUserInterface) *AuthError
 }

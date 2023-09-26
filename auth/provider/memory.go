@@ -86,6 +86,16 @@ func (p MemoryApiUserProvider) ProvideByConfirmationToken(token string) (contrac
 	return nil, contract.NewAuthError(contract.UserNotFound, nil)
 }
 
+func (p MemoryApiUserProvider) ProvideByResetToken(token string) (contract.ApiUserInterface, *contract.AuthError) {
+	for _, user := range p.memory {
+		if user.ResetToken == token {
+			return &user, nil
+		}
+	}
+
+	return nil, contract.NewAuthError(contract.UserNotFound, nil)
+}
+
 func (p MemoryApiUserProvider) ProvideNew(login string, encryptedPassword string) contract.ApiUserInterface {
 	return &entity.MemoryApiUser{
 		Login:    login,

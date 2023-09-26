@@ -37,6 +37,7 @@ type MemoryApiUser struct {
 	CurrentToken      *MemoryApiUserToken
 	AccessScope       *contract.AccessScope
 	ConfirmationToken string
+	ResetToken        string
 }
 
 func (u *MemoryApiUser) AddApiToken(apiToken contract.ApiUserTokenInterface) {
@@ -68,6 +69,10 @@ func (u *MemoryApiUser) SetPassword(password string) {
 	u.Password = password
 }
 
+func (u *MemoryApiUser) GetLogin() string {
+	return u.Login
+}
+
 func (u *MemoryApiUser) SetLogin(login string) {
 	u.Login = login
 }
@@ -90,6 +95,23 @@ func (u *MemoryApiUser) IsActive() bool {
 }
 
 func (u *MemoryApiUser) SetActive(active bool) {
+	// no-op
+}
+
+func (u *MemoryApiUser) GetResetRequestedAt() *time.Time {
+	resetRequestedAt := time.Now()
+	return &resetRequestedAt
+}
+
+func (u *MemoryApiUser) SetResetRequestedAt(resetRequestedAt *time.Time) {
+	// no-op
+}
+
+func (u *MemoryApiUser) GetResetToken() *string {
+	return nil
+}
+
+func (u *MemoryApiUser) SetResetToken(resetToken *string) {
 	// no-op
 }
 

@@ -57,12 +57,17 @@ type ApiUserInterface interface {
 	SetLastLoginAt(lastLoginAt *time.Time)
 	GetPassword() string
 	SetPassword(password string)
+	GetLogin() string
 	SetLogin(login string)
 	SetConfirmationToken(confirmationToken *string)
 	GetConfirmationRequestedAt() *time.Time
 	SetConfirmationRequestedAt(confirmationRequestedAt *time.Time)
 	IsActive() bool
 	SetActive(active bool)
+	GetResetRequestedAt() *time.Time
+	SetResetRequestedAt(resetRequestedAt *time.Time)
+	GetResetToken() *string
+	SetResetToken(resetToken *string)
 }
 type ApiUserTokenInterface interface {
 	SetToken(token string)
