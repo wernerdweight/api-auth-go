@@ -88,7 +88,6 @@ func authenticateApiUser(c *gin.Context) (contract.ApiUserInterface, *contract.A
 	if c.Request.Header.Get(constants.ApiUserTokenHeader) == "" {
 		return nil, contract.NewAuthError(contract.UserTokenRequired, nil)
 	}
-	// TODO: check cache first (if enabled)
 	apiToken := c.Request.Header.Get(constants.ApiUserTokenHeader)
 	if config.ProviderInstance.IsCacheEnabled() {
 		apiUser, err := config.ProviderInstance.GetCacheDriver().GetApiUserByToken(apiToken)

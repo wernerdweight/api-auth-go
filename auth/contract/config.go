@@ -12,7 +12,6 @@ type ClientConfig struct {
 }
 
 type UserConfig struct {
-	// TODO: add ChainProvider to allow multiple providers (fallback to next provider if previous one is a miss)
 	// Provider: your provider that implements ApiUserProviderInterface
 	Provider ApiUserProviderInterface[ApiUserInterface]
 	// TokenFactory: your token type that implements ApiUserTokenInterface
@@ -57,9 +56,9 @@ type Config struct {
 
 	// TargetHandlers: list of handlers to target (optional)
 	TargetHandlers *[]string
-	// '*'   # all handlers
-	// TODO: 'My\Controller\SomeInterface'
-	// TODO: 'Vendor\Bundle\Controller\SomeOtherInterface'
+	// '*'            	# all handlers
+	// '/v1/*'   		# all handlers starting with '/v1/'
+	// '/v1/some/path'  # only '/v1/some/path' handler
 
 	// ExcludeOptionsRequests: if true, requests using the OPTIONS method will be ignored (authentication will be skipped) - default false
 	ExcludeOptionsRequests *bool
