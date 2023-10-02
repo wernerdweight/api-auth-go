@@ -2,7 +2,6 @@ package cache
 
 import (
 	"github.com/wernerdweight/api-auth-go/auth/contract"
-	"log"
 	"time"
 )
 
@@ -41,7 +40,6 @@ func (d *MemoryCacheDriver) SetApiClientByIdAndSecret(id string, secret string, 
 		Value:    client,
 		ExpireAt: time.Now().Add(d.ttl),
 	}
-	log.Printf("cache client data: %+v", d.apiClientMemory[d.prefix+id+secret].Value)
 	return nil
 }
 
@@ -78,7 +76,6 @@ func (d *MemoryCacheDriver) SetApiUserByToken(token string, user contract.ApiUse
 		Value:    user,
 		ExpireAt: time.Now().Add(d.ttl),
 	}
-	log.Printf("cache user data: %+v", d.apiUserMemory[d.prefix+token].Value)
 	return nil
 }
 
