@@ -33,6 +33,7 @@ const (
 	ResettingAlreadyRequested
 	ResetTokenExpired
 	CacheError
+	MarshallingError
 )
 
 var AuthErrorCodes = map[AuthErrorCode]string{
@@ -58,6 +59,7 @@ var AuthErrorCodes = map[AuthErrorCode]string{
 	ResettingAlreadyRequested: "resetting already requested",
 	ResetTokenExpired:         "reset token expired",
 	CacheError:                "cache error",
+	MarshallingError:          "marshalling error",
 }
 
 func NewAuthError(code AuthErrorCode, payload interface{}) *AuthError {

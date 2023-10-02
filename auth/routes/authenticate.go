@@ -6,6 +6,7 @@ import (
 	"github.com/wernerdweight/api-auth-go/auth/config"
 	"github.com/wernerdweight/api-auth-go/auth/constants"
 	"github.com/wernerdweight/api-auth-go/auth/contract"
+	"github.com/wernerdweight/api-auth-go/auth/marshaller"
 	generator "github.com/wernerdweight/token-generator-go"
 	"net/http"
 	"strings"
@@ -83,5 +84,14 @@ func authenticateHandler(c *gin.Context) {
 
 	// temporarily put previous login at back to return in the response (not to update it in the database)
 	apiUser.SetLastLoginAt(previousLoginAt)
-	c.JSON(200, apiUser)
+	output, err := marshaller.MarshalPublic(apiUser)
+	if nil != err {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"code":    err.Code,
+			"error":   err.Err.Error(),
+			"payload": err.Payload,
+		})
+		return
+	}
+	c.JSON(200, output)
 }

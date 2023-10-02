@@ -7,10 +7,10 @@ import (
 
 // MemoryApiClient is the simplest struct that implements ApiClientInterface
 type MemoryApiClient struct {
-	Id          string
-	Secret      string
-	ApiKey      string
-	AccessScope *contract.AccessScope
+	Id          string                `json:"clientId" groups:"internal"`
+	Secret      string                `json:"clientSecret" groups:"internal"`
+	ApiKey      string                `json:"apiKey" groups:"internal"`
+	AccessScope *contract.AccessScope `json:"clientScope" groups:"internal,public"`
 }
 
 func (c *MemoryApiClient) GetClientId() string {
@@ -31,17 +31,21 @@ func (c *MemoryApiClient) GetClientScope() *contract.AccessScope {
 
 // MemoryApiUser is the simplest struct that implements ApiUserInterface
 type MemoryApiUser struct {
-	Id                string
-	Login             string
-	Password          string
-	CurrentToken      *MemoryApiUserToken
-	AccessScope       *contract.AccessScope
-	ConfirmationToken string
-	ResetToken        string
+	Id                string                `json:"id" groups:"internal,public"`
+	Login             string                `json:"login" groups:"internal"`
+	Password          string                `json:"password" groups:"internal"`
+	CurrentToken      *MemoryApiUserToken   `json:"token" groups:"internal,public"`
+	AccessScope       *contract.AccessScope `json:"userScope" groups:"internal,public"`
+	ConfirmationToken string                `json:"confirmationToken" groups:"internal"`
+	ResetToken        string                `json:"resetToken" groups:"internal"`
 }
 
 func (u *MemoryApiUser) AddApiToken(apiToken contract.ApiUserTokenInterface) {
-	u.CurrentToken = apiToken.(*MemoryApiUserToken)
+	memoryApiToken := MemoryApiUserToken{
+		Token:          apiToken.GetToken(),
+		ExpirationDate: apiToken.GetExpirationDate(),
+	}
+	u.CurrentToken = &memoryApiToken
 }
 
 func (u *MemoryApiUser) GetCurrentToken() contract.ApiUserTokenInterface {
@@ -117,9 +121,9 @@ func (u *MemoryApiUser) SetResetToken(resetToken *string) {
 
 // MemoryApiUserToken is the simplest struct that implements ApiUserTokenInterface
 type MemoryApiUserToken struct {
-	Token          string
-	ExpirationDate time.Time
-	ApiUser        *MemoryApiUser
+	Token          string         `json:"token" groups:"internal,public"`
+	ExpirationDate time.Time      `json:"expirationDate" groups:"internal,public"`
+	ApiUser        *MemoryApiUser `json:"-"`
 }
 
 func (t *MemoryApiUserToken) SetToken(token string) {

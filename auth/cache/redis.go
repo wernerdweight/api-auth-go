@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/redis/go-redis/v9"
 	"github.com/wernerdweight/api-auth-go/auth/contract"
+	"github.com/wernerdweight/api-auth-go/auth/marshaller"
 	"time"
 )
 
@@ -28,9 +29,6 @@ func (d *RedisCacheDriver) getClient() *redis.Client {
 	return d.client
 }
 
-// TODO: this needs to use the full object, while the response needs to use just a subset of the object
-//
-//	check https://stackoverflow.com/questions/24770235/one-struct-with-multiple-json-representations
 func (d *RedisCacheDriver) unmarshalClient(value string) (contract.ApiClientInterface, *contract.AuthError) {
 	apiClient := d.newApiClient()
 	err := json.Unmarshal([]byte(value), &apiClient)
@@ -67,7 +65,11 @@ func (d *RedisCacheDriver) GetApiClientByIdAndSecret(id string, secret string) (
 }
 
 func (d *RedisCacheDriver) SetApiClientByIdAndSecret(id string, secret string, client contract.ApiClientInterface) *contract.AuthError {
-	value, err := json.Marshal(client)
+	marshalled, authErr := marshaller.MarshalInternal(client)
+	if nil != authErr {
+		return authErr
+	}
+	value, err := json.Marshal(marshalled)
 	if nil != err {
 		return contract.NewAuthError(contract.CacheError, map[string]string{"details": err.Error()})
 	}
@@ -90,7 +92,11 @@ func (d *RedisCacheDriver) GetApiClientByApiKey(apiKey string) (contract.ApiClie
 }
 
 func (d *RedisCacheDriver) SetApiClientByApiKey(apiKey string, client contract.ApiClientInterface) *contract.AuthError {
-	value, err := json.Marshal(client)
+	marshalled, authErr := marshaller.MarshalInternal(client)
+	if nil != authErr {
+		return authErr
+	}
+	value, err := json.Marshal(marshalled)
 	if nil != err {
 		return contract.NewAuthError(contract.CacheError, map[string]string{"details": err.Error()})
 	}
@@ -113,7 +119,11 @@ func (d *RedisCacheDriver) GetApiUserByToken(token string) (contract.ApiUserInte
 }
 
 func (d *RedisCacheDriver) SetApiUserByToken(token string, user contract.ApiUserInterface) *contract.AuthError {
-	value, err := json.Marshal(user)
+	marshalled, authErr := marshaller.MarshalInternal(user)
+	if nil != authErr {
+		return authErr
+	}
+	value, err := json.Marshal(marshalled)
 	if nil != err {
 		return contract.NewAuthError(contract.CacheError, map[string]string{"details": err.Error()})
 	}

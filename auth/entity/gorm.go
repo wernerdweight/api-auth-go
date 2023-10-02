@@ -3,18 +3,17 @@ package entity
 import (
 	"github.com/google/uuid"
 	"github.com/wernerdweight/api-auth-go/auth/contract"
-	"log"
 	"time"
 )
 
 // GormApiClient is a struct that implements ApiClientInterface for GORM
 type GormApiClient struct {
-	ID           uuid.UUID             `gorm:"primaryKey;type:uuid;default:uuid_generate_v4()" json:"id"`
-	ClientId     string                `json:"-"`
-	ClientSecret string                `json:"-"`
-	ApiKey       string                `json:"-"`
-	AccessScope  *contract.AccessScope `gorm:"type:jsonb;serializer:json" json:"clientScope"`
-	CreatedAt    time.Time             `gorm:"not null;default:CURRENT_TIMESTAMP" json:"-"`
+	ID           uuid.UUID             `gorm:"primaryKey;type:uuid;default:uuid_generate_v4()" json:"id" groups:"internal,public"`
+	ClientId     string                `json:"clientId" groups:"internal"`
+	ClientSecret string                `json:"clientSecret" groups:"internal"`
+	ApiKey       string                `json:"apiKey" groups:"internal"`
+	AccessScope  *contract.AccessScope `gorm:"type:jsonb;serializer:json" json:"clientScope" groups:"internal,public"`
+	CreatedAt    time.Time             `gorm:"not null;default:CURRENT_TIMESTAMP" json:"createdAt" groups:"internal"`
 }
 
 func (c *GormApiClient) TableName() string {
@@ -39,19 +38,19 @@ func (c *GormApiClient) GetClientScope() *contract.AccessScope {
 
 // GormApiUser is a struct that implements ApiUserInterface for GORM
 type GormApiUser struct {
-	ID                      uuid.UUID                      `gorm:"primaryKey;type:uuid;default:uuid_generate_v4()" json:"id"`
-	Login                   string                         `gorm:"column:email" json:"-"`
-	Password                string                         `json:"-"`
-	AccessScope             *contract.AccessScope          `gorm:"type:jsonb;serializer:json" json:"userScope"`
-	LastLoginAt             *time.Time                     `json:"lastLoginAt"`
-	CurrentToken            contract.ApiUserTokenInterface `gorm:"-" json:"token"`
+	ID                      uuid.UUID                      `gorm:"primaryKey;type:uuid;default:uuid_generate_v4()" json:"id" groups:"internal,public"`
+	Login                   string                         `gorm:"column:email" json:"login" groups:"internal"`
+	Password                string                         `json:"password" groups:"internal"`
+	AccessScope             *contract.AccessScope          `gorm:"type:jsonb;serializer:json" json:"userScope" groups:"internal,public"`
+	LastLoginAt             *time.Time                     `json:"lastLoginAt" groups:"internal,public"`
+	CurrentToken            contract.ApiUserTokenInterface `gorm:"-" json:"token" groups:"internal,public"`
 	ApiTokens               []GormApiUserToken             `gorm:"foreignKey:ApiUserID" json:"-"`
-	CreatedAt               time.Time                      `gorm:"not null;default:CURRENT_TIMESTAMP" json:"-"`
-	Active                  bool                           `gorm:"not null;default:false" json:"-"`
-	ConfirmationRequestedAt *time.Time                     `json:"-"`
-	ConfirmationToken       *string                        `json:"-"`
-	ResetRequestedAt        *time.Time                     `json:"-"`
-	ResetToken              *string                        `json:"-"`
+	CreatedAt               time.Time                      `gorm:"not null;default:CURRENT_TIMESTAMP" json:"createdAt" groups:"internal"`
+	Active                  bool                           `gorm:"not null;default:false" json:"active" groups:"internal"`
+	ConfirmationRequestedAt *time.Time                     `json:"confirmationRequestedAt" groups:"internal"`
+	ConfirmationToken       *string                        `json:"confirmationToken" groups:"internal"`
+	ResetRequestedAt        *time.Time                     `json:"resetRequestedAt" groups:"internal"`
+	ResetToken              *string                        `json:"resetToken" groups:"internal"`
 }
 
 func (u *GormApiUser) TableName() string {
@@ -65,7 +64,6 @@ func (u *GormApiUser) AddApiToken(apiToken contract.ApiUserTokenInterface) {
 	}
 	u.CurrentToken = apiToken
 	u.ApiTokens = append(u.ApiTokens, gormApiToken)
-	log.Printf("Added token %s to user: tokens: %v", apiToken.GetToken(), u.ApiTokens)
 }
 
 func (u *GormApiUser) GetCurrentToken() contract.ApiUserTokenInterface {
@@ -138,12 +136,12 @@ func (u *GormApiUser) SetResetToken(resetToken *string) {
 
 // GormApiUserToken is a struct that implements ApiUserTokenInterface for GORM
 type GormApiUserToken struct {
-	ID             uuid.UUID    `gorm:"primaryKey;type:uuid;default:uuid_generate_v4()" json:"-"`
-	Token          string       `json:"token"`
-	ExpirationDate time.Time    `json:"expirationDate"`
+	ID             uuid.UUID    `gorm:"primaryKey;type:uuid;default:uuid_generate_v4()" json:"id" groups:"internal"`
+	Token          string       `json:"token" groups:"internal,public"`
+	ExpirationDate time.Time    `json:"expirationDate" groups:"internal,public"`
 	ApiUser        *GormApiUser `json:"-"`
-	ApiUserID      uuid.UUID    `json:"-"`
-	CreatedAt      time.Time    `gorm:"not null;default:CURRENT_TIMESTAMP" json:"-"`
+	ApiUserID      uuid.UUID    `json:"apiUserId" groups:"internal"`
+	CreatedAt      time.Time    `gorm:"not null;default:CURRENT_TIMESTAMP" json:"createdAt" groups:"internal"`
 }
 
 func (t *GormApiUserToken) TableName() string {
