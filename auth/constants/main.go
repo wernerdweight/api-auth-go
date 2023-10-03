@@ -21,3 +21,11 @@ var ScopeAccessibilityOptions = []ScopeAccessibility{
 	ScopeAccessibilityForbidden,
 	ScopeAccessibilityOnBehalf,
 }
+
+var FUPScopePeriods = []string{
+	"minutely",
+	"hourly",
+	"daily",
+	"weekly",
+	"monthly",
+}

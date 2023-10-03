@@ -9,6 +9,8 @@ type ClientConfig struct {
 	UseScopeAccessModel *bool
 	// AccessScopeChecker: the checker used to check scope access that implements AccessScopeCheckerInterface - defaults to PathAccessScopeChecker
 	AccessScopeChecker AccessScopeCheckerInterface
+	// FUPChecker: the checker used to check FUP limits that implements FUPCheckerInterface (optional; if you omit FUP checker, FUP limits will not be checked)
+	FUPChecker FUPCheckerInterface
 }
 
 type UserConfig struct {
@@ -26,6 +28,8 @@ type UserConfig struct {
 	WithRegistration *bool
 	// ConfirmationTokenExpirationInterval: confirmation token expiration in seconds - defaults to 43200 (12 hours)
 	ConfirmationTokenExpirationInterval *time.Duration
+	// FUPChecker: the checker used to check FUP limits that implements FUPCheckerInterface (optional; if you omit FUP checker, FUP limits will not be checked)
+	FUPChecker FUPCheckerInterface
 }
 
 type ModesConfig struct {

@@ -176,6 +176,16 @@ func (s *TestSuite) TestProvider_GetClientScopeAccessChecker() {
 	s.NotNil(s.provider.GetClientScopeAccessChecker())
 }
 
+func (s *TestSuite) TestProvider_GetClientFUPChecker() {
+	s.Nil(s.provider.GetClientFUPChecker())
+	s.provider.Init(contract.Config{
+		Client: contract.ClientConfig{
+			FUPChecker: nil, // TODO: fup.PathAccessScopeChecker{},
+		},
+	})
+	s.NotNil(s.provider.GetClientFUPChecker())
+}
+
 func (s *TestSuite) TestProvider_GetUserProvider() {
 	s.Nil(s.provider.GetUserProvider())
 	s.provider.Init(contract.Config{
@@ -205,6 +215,16 @@ func (s *TestSuite) TestProvider_GetUserScopeAccessChecker() {
 		},
 	})
 	s.NotNil(s.provider.GetUserScopeAccessChecker())
+}
+
+func (s *TestSuite) TestProvider_GetUserFUPChecker() {
+	s.Nil(s.provider.GetUserFUPChecker())
+	s.provider.Init(contract.Config{
+		User: &contract.UserConfig{
+			FUPChecker: nil, // TODO: fup.PathAccessScopeChecker{},
+		},
+	})
+	s.NotNil(s.provider.GetUserFUPChecker())
 }
 
 func (s *TestSuite) TestProvider_GetApiTokenExpirationInterval() {
@@ -292,4 +312,24 @@ func (s *TestSuite) TestProvider_IsCacheEnabled() {
 		},
 	})
 	s.True(s.provider.IsCacheEnabled())
+}
+
+func (s *TestSuite) TestProvider_IsClientFUPEnabled() {
+	s.False(s.provider.IsClientFUPEnabled())
+	s.provider.Init(contract.Config{
+		Client: contract.ClientConfig{
+			FUPChecker: nil, // TODO: fup.PathAccessScopeChecker{},
+		},
+	})
+	s.True(s.provider.IsClientFUPEnabled())
+}
+
+func (s *TestSuite) TestProvider_IsUserFUPEnabled() {
+	s.False(s.provider.IsUserFUPEnabled())
+	s.provider.Init(contract.Config{
+		User: &contract.UserConfig{
+			FUPChecker: nil, // TODO: fup.PathAccessScopeChecker{},
+		},
+	})
+	s.True(s.provider.IsUserFUPEnabled())
 }

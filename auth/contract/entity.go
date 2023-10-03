@@ -43,6 +43,30 @@ func (s AccessScope) GetAccessibility(key string) constants.ScopeAccessibility {
 	return constants.ScopeAccessibilityForbidden
 }
 
+type FUPScope map[string]any
+
+func (s FUPScope) GetLimit(key string) *int {
+	currentScope := s
+	pathSegments := strings.Split(key, ".")
+	index := 0
+	for _, segment := range pathSegments {
+		if value, ok := currentScope[segment]; ok {
+			if typedValue, ok := value.(FUPScope); ok {
+				currentScope = typedValue
+				index++
+				continue
+			}
+			if typedValue, ok := value.(int); ok {
+				if index == len(pathSegments)-1 {
+					return &typedValue
+				}
+				return nil
+			}
+		}
+	}
+	return nil
+}
+
 type ApiClientInterface interface {
 	GetClientId() string
 	GetClientSecret() string

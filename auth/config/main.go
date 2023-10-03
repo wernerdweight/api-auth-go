@@ -82,6 +82,22 @@ func (p *Provider) IsCacheEnabled() bool {
 	return nil != p.config.Cache.Driver
 }
 
+func (p *Provider) GetClientFUPChecker() contract.FUPCheckerInterface {
+	return p.config.Client.FUPChecker
+}
+
+func (p *Provider) GetUserFUPChecker() contract.FUPCheckerInterface {
+	return p.config.User.FUPChecker
+}
+
+func (p *Provider) IsClientFUPEnabled() bool {
+	return nil != p.config.Client.FUPChecker
+}
+
+func (p *Provider) IsUserFUPEnabled() bool {
+	return nil != p.config.User.FUPChecker
+}
+
 func (p *Provider) initUser(config contract.Config) {
 	if nil != config.User.Provider {
 		p.config.User.Provider = config.User.Provider
@@ -103,6 +119,9 @@ func (p *Provider) initUser(config contract.Config) {
 	}
 	if nil != config.User.ConfirmationTokenExpirationInterval {
 		p.config.User.ConfirmationTokenExpirationInterval = config.User.ConfirmationTokenExpirationInterval
+	}
+	if nil != config.User.FUPChecker {
+		p.config.User.FUPChecker = config.User.FUPChecker
 	}
 }
 
@@ -136,6 +155,9 @@ func (p *Provider) Init(config contract.Config) {
 	}
 	if nil != config.Client.AccessScopeChecker {
 		p.config.Client.AccessScopeChecker = config.Client.AccessScopeChecker
+	}
+	if nil != config.Client.FUPChecker {
+		p.config.Client.FUPChecker = config.Client.FUPChecker
 	}
 
 	if nil != config.User {
@@ -178,6 +200,7 @@ var ProviderInstance = &Provider{
 			Provider:            nil,
 			UseScopeAccessModel: &defaultClientUseScopeAccessModel,
 			AccessScopeChecker:  checker.PathAccessScopeChecker{},
+			FUPChecker:          nil,
 		},
 		User: &contract.UserConfig{
 			Provider:                            nil,
@@ -187,6 +210,7 @@ var ProviderInstance = &Provider{
 			AccessScopeChecker:                  checker.PathAccessScopeChecker{},
 			WithRegistration:                    &defaultWithRegistration,
 			ConfirmationTokenExpirationInterval: &defaultConfirmationExpirationInterval,
+			FUPChecker:                          nil,
 		},
 		Mode: &contract.ModesConfig{
 			ApiKey:            &defaultApiKeyMode,
