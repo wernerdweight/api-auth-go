@@ -8,7 +8,6 @@ import (
 	"github.com/wernerdweight/api-auth-go/auth/security"
 	"log"
 	"net/http"
-	"time"
 )
 
 func Middleware(r *gin.Engine, c contract.Config) gin.HandlerFunc {
@@ -32,9 +31,6 @@ func Middleware(r *gin.Engine, c contract.Config) gin.HandlerFunc {
 	}
 
 	return func(c *gin.Context) {
-		t := time.Now()
-
-		// before request
 		if config.ProviderInstance.ShouldExcludeOptionsRequests() && http.MethodOptions == c.Request.Method {
 			c.Next()
 			return
@@ -42,7 +38,6 @@ func Middleware(r *gin.Engine, c contract.Config) gin.HandlerFunc {
 
 		err := security.Authenticate(c)
 		if nil != err {
-			log.Printf("AUTH: %v", err)
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"code":    err.Code,
 				"error":   err.Err.Error(),
@@ -52,14 +47,5 @@ func Middleware(r *gin.Engine, c contract.Config) gin.HandlerFunc {
 		}
 
 		c.Next()
-
-		// after request
-		latency := time.Since(t)
-		log.Printf("AUTH: latency: %d", latency)
-
-		// access the status we are sending
-		status := c.Writer.Status()
-		log.Printf("AUTH: status: %d", status)
-		log.Printf("AUTH: value: %d", c.GetInt("example"))
 	}
 }
