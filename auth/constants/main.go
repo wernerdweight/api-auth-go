@@ -10,7 +10,13 @@ const (
 	ScopeAccessibilityAccessible ScopeAccessibility = "true"
 	ScopeAccessibilityForbidden  ScopeAccessibility = "false"
 	ScopeAccessibilityOnBehalf   ScopeAccessibility = "on-behalf"
+	ScopeAccessibilityUnlimited  ScopeAccessibility = "unlimited"
 	DefaultTokenLength                              = 32
+	PeriodMinutely               Period             = "minutely"
+	PeriodHourly                 Period             = "hourly"
+	PeriodDaily                  Period             = "daily"
+	PeriodWeekly                 Period             = "weekly"
+	PeriodMonthly                Period             = "monthly"
 
 	ApiClient = "api-client"
 	ApiUser   = "api-user"
@@ -22,10 +28,18 @@ var ScopeAccessibilityOptions = []ScopeAccessibility{
 	ScopeAccessibilityOnBehalf,
 }
 
-var FUPScopePeriods = []string{
-	"minutely",
-	"hourly",
-	"daily",
-	"weekly",
-	"monthly",
+var FUPScopeAccessibilityOptions = []ScopeAccessibility{
+	ScopeAccessibilityAccessible,
+	ScopeAccessibilityForbidden,
+	ScopeAccessibilityUnlimited,
+}
+
+type Period string
+
+var FUPScopePeriods = []Period{
+	PeriodMinutely,
+	PeriodHourly,
+	PeriodDaily,
+	PeriodWeekly,
+	PeriodMonthly,
 }
