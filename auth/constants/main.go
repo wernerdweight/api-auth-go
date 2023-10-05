@@ -7,6 +7,8 @@ const (
 	ClientSecretHeader                              = "X-Client-Secret"
 	ApiUserTokenHeader                              = "X-Api-User-Token"
 	ApiKeyHeader                                    = "Authorization"
+	ClientFUPLimitsHeader                           = "X-Client-FUP-Limits"
+	UserFUPLimitsHeader                             = "X-User-FUP-Limits"
 	ScopeAccessibilityAccessible ScopeAccessibility = "true"
 	ScopeAccessibilityForbidden  ScopeAccessibility = "false"
 	ScopeAccessibilityOnBehalf   ScopeAccessibility = "on-behalf"

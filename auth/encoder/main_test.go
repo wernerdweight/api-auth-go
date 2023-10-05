@@ -68,6 +68,10 @@ func (m mockApiUser) GetResetToken() *string {
 
 func (m mockApiUser) SetResetToken(resetToken *string) {}
 
+func (m mockApiUser) GetFUPScope() *contract.FUPScope {
+	return nil
+}
+
 func TestEncoder_ComparePassword(t *testing.T) {
 	assertion := assert.New(t)
 	type args struct {

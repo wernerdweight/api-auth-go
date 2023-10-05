@@ -1,6 +1,7 @@
 package contract
 
 import (
+	"encoding/json"
 	"github.com/wernerdweight/api-auth-go/auth/constants"
 	"time"
 )
@@ -15,6 +16,17 @@ type FUPScopeLimits struct {
 	Accessible constants.ScopeAccessibility
 	Limits     map[constants.Period]FUPLimits
 	Error      *AuthError
+}
+
+func (l *FUPScopeLimits) GetLimitsHeader() string {
+	if nil == l.Limits {
+		return ""
+	}
+	header, err := json.Marshal(l.Limits)
+	if nil != err {
+		return ""
+	}
+	return string(header)
 }
 
 type FUPCacheEntry struct {

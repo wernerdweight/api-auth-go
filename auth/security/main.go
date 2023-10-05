@@ -136,7 +136,10 @@ func authenticateOnBehalf(c *gin.Context) *contract.AuthError {
 		if fupLimits.Accessible == constants.ScopeAccessibilityForbidden {
 			return contract.NewFUPError(contract.RequestLimitDepleted, fupLimits.Limits)
 		}
-		// TODO: set response header with limits
+		header := fupLimits.GetLimitsHeader()
+		if "" != header {
+			c.Header(constants.UserFUPLimitsHeader, header)
+		}
 	}
 	userAccessScopeChecker := config.ProviderInstance.GetUserScopeAccessChecker()
 	userScopeAccessibility := userAccessScopeChecker.Check(apiUser.GetUserScope(), c)
@@ -172,7 +175,10 @@ func Authenticate(c *gin.Context) *contract.AuthError {
 		if fupLimits.Accessible == constants.ScopeAccessibilityForbidden {
 			return contract.NewFUPError(contract.RequestLimitDepleted, fupLimits.Limits)
 		}
-		// TODO: set response header with limits
+		header := fupLimits.GetLimitsHeader()
+		if "" != header {
+			c.Header(constants.ClientFUPLimitsHeader, header)
+		}
 	}
 	clientAccessScopeChecker := config.ProviderInstance.GetClientScopeAccessChecker()
 	scopeAccessibility := clientAccessScopeChecker.Check(apiClient.GetClientScope(), c)
