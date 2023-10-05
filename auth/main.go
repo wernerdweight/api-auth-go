@@ -38,7 +38,7 @@ func Middleware(r *gin.Engine, c contract.Config) gin.HandlerFunc {
 
 		err := security.Authenticate(c)
 		if nil != err {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			c.AbortWithStatusJSON(err.Status, gin.H{
 				"code":    err.Code,
 				"error":   err.Err.Error(),
 				"payload": err.Payload,

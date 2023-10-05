@@ -12,7 +12,7 @@ func marshal(v interface{}, groups []string) (interface{}, *contract.AuthError) 
 	}
 	data, err := sheriff.Marshal(o, v)
 	if nil != err {
-		return nil, contract.NewAuthError(contract.MarshallingError, map[string]string{"details": err.Error()})
+		return nil, contract.NewInternalError(contract.MarshallingError, map[string]string{"details": err.Error()})
 	}
 	return data, nil
 }

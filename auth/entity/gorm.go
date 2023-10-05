@@ -13,6 +13,7 @@ type GormApiClient struct {
 	ClientSecret string                `json:"clientSecret" groups:"internal"`
 	ApiKey       string                `json:"apiKey" groups:"internal"`
 	AccessScope  *contract.AccessScope `gorm:"type:jsonb;serializer:json" json:"clientScope" groups:"internal,public"`
+	FUPScope     *contract.FUPScope    `gorm:"type:jsonb;serializer:json" json:"fupConfig" groups:"internal"`
 	CreatedAt    time.Time             `gorm:"not null;default:CURRENT_TIMESTAMP" json:"createdAt" groups:"internal"`
 }
 
@@ -36,12 +37,17 @@ func (c *GormApiClient) GetClientScope() *contract.AccessScope {
 	return c.AccessScope
 }
 
+func (c *GormApiClient) GetFUPScope() *contract.FUPScope {
+	return c.FUPScope
+}
+
 // GormApiUser is a struct that implements ApiUserInterface for GORM
 type GormApiUser struct {
 	ID                      uuid.UUID                      `gorm:"primaryKey;type:uuid;default:uuid_generate_v4()" json:"id" groups:"internal,public"`
 	Login                   string                         `gorm:"column:email" json:"login" groups:"internal"`
 	Password                string                         `json:"password" groups:"internal"`
 	AccessScope             *contract.AccessScope          `gorm:"type:jsonb;serializer:json" json:"userScope" groups:"internal,public"`
+	FUPScope                *contract.FUPScope             `gorm:"type:jsonb;serializer:json" json:"fupConfig" groups:"internal"`
 	LastLoginAt             *time.Time                     `json:"lastLoginAt" groups:"internal,public"`
 	CurrentToken            contract.ApiUserTokenInterface `gorm:"-" json:"token" groups:"internal,public"`
 	ApiTokens               []GormApiUserToken             `gorm:"foreignKey:ApiUserID" json:"-"`
@@ -132,6 +138,10 @@ func (u *GormApiUser) GetResetToken() *string {
 
 func (u *GormApiUser) SetResetToken(resetToken *string) {
 	u.ResetToken = resetToken
+}
+
+func (u *GormApiUser) GetFUPScope() *contract.FUPScope {
+	return u.FUPScope
 }
 
 // GormApiUserToken is a struct that implements ApiUserTokenInterface for GORM

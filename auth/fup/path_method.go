@@ -3,7 +3,6 @@ package fup
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/wernerdweight/api-auth-go/auth/constants"
 	"github.com/wernerdweight/api-auth-go/auth/contract"
 	"strings"
 )
@@ -12,16 +11,9 @@ import (
 type PathAndMethodFUPChecker struct {
 }
 
-func (ch PathAndMethodFUPChecker) Check(scope *contract.FUPScope, c *gin.Context) (bool, error) {
-	if nil == scope || nil == c || nil == c.Request || nil == c.Request.URL {
-		return constants.ScopeAccessibilityForbidden
-	}
+func (ch PathAndMethodFUPChecker) Check(scope *contract.FUPScope, c *gin.Context, key string) contract.FUPScopeLimits {
 	path := strings.ToLower(c.Request.URL.Path)
 	method := strings.ToLower(c.Request.Method)
-	return scope.GetAccessibility(fmt.Sprintf("%s:%s", method, path))
-}
-
-func (ch PathAndMethodFUPChecker) Log(c *gin.Context) error {
-	// TODO: implement
-	return nil
+	combinedPath := fmt.Sprintf("%s:%s", method, path)
+	return check(combinedPath, scope, c, key)
 }

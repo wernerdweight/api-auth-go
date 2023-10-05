@@ -100,7 +100,7 @@ func authenticateApiUser(c *gin.Context) (contract.ApiUserInterface, *contract.A
 	}
 	apiUserProvider := config.ProviderInstance.GetUserProvider()
 	if nil == apiUserProvider {
-		return nil, contract.NewAuthError(contract.UserProviderNotConfigured, nil)
+		return nil, contract.NewInternalError(contract.UserProviderNotConfigured, nil)
 	}
 	apiUser, err := apiUserProvider.ProvideByToken(apiToken)
 	if nil != err {
@@ -127,7 +127,17 @@ func authenticateOnBehalf(c *gin.Context) *contract.AuthError {
 		return nil
 	}
 
-	// TODO: check user FUP
+	if config.ProviderInstance.IsUserFUPEnabled() {
+		userFUPChecker := config.ProviderInstance.GetUserFUPChecker()
+		fupLimits := userFUPChecker.Check(apiUser.GetFUPScope(), c, apiUser.GetLogin())
+		if nil != fupLimits.Error {
+			return fupLimits.Error
+		}
+		if fupLimits.Accessible == constants.ScopeAccessibilityForbidden {
+			return contract.NewFUPError(contract.RequestLimitDepleted, fupLimits.Limits)
+		}
+		// TODO: set response header with limits
+	}
 	userAccessScopeChecker := config.ProviderInstance.GetUserScopeAccessChecker()
 	userScopeAccessibility := userAccessScopeChecker.Check(apiUser.GetUserScope(), c)
 
@@ -153,7 +163,17 @@ func Authenticate(c *gin.Context) *contract.AuthError {
 		return nil
 	}
 
-	// TODO: check client FUP
+	if config.ProviderInstance.IsClientFUPEnabled() {
+		clientFUPChecker := config.ProviderInstance.GetClientFUPChecker()
+		fupLimits := clientFUPChecker.Check(apiClient.GetFUPScope(), c, apiClient.GetClientId())
+		if nil != fupLimits.Error {
+			return fupLimits.Error
+		}
+		if fupLimits.Accessible == constants.ScopeAccessibilityForbidden {
+			return contract.NewFUPError(contract.RequestLimitDepleted, fupLimits.Limits)
+		}
+		// TODO: set response header with limits
+	}
 	clientAccessScopeChecker := config.ProviderInstance.GetClientScopeAccessChecker()
 	scopeAccessibility := clientAccessScopeChecker.Check(apiClient.GetClientScope(), c)
 

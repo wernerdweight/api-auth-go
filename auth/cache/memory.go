@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"github.com/wernerdweight/api-auth-go/auth/constants"
 	"github.com/wernerdweight/api-auth-go/auth/contract"
 	"time"
 )
@@ -15,6 +16,7 @@ type MemoryCacheEntry[T any] struct {
 type MemoryCacheDriver struct {
 	apiClientMemory map[string]MemoryCacheEntry[contract.ApiClientInterface]
 	apiUserMemory   map[string]MemoryCacheEntry[contract.ApiUserInterface]
+	fupMemory       map[string]MemoryCacheEntry[contract.FUPCacheEntry]
 	prefix          string
 	ttl             time.Duration
 }
@@ -75,6 +77,29 @@ func (d *MemoryCacheDriver) SetApiUserByToken(token string, user contract.ApiUse
 	d.apiUserMemory[d.prefix+token] = MemoryCacheEntry[contract.ApiUserInterface]{
 		Value:    user,
 		ExpireAt: time.Now().Add(d.ttl),
+	}
+	return nil
+}
+
+func (d *MemoryCacheDriver) GetFUPEntry(key string) (*contract.FUPCacheEntry, *contract.AuthError) {
+	if hit, ok := d.fupMemory[d.prefix+key]; ok {
+		return &hit.Value, nil
+	}
+	return &contract.FUPCacheEntry{
+		UpdatedAt: time.Time{},
+		Used: map[constants.Period]int{
+			constants.PeriodMinutely: 0,
+			constants.PeriodHourly:   0,
+			constants.PeriodDaily:    0,
+			constants.PeriodWeekly:   0,
+			constants.PeriodMonthly:  0,
+		},
+	}, nil
+}
+
+func (d *MemoryCacheDriver) SetFUPEntry(key string, entry *contract.FUPCacheEntry) *contract.AuthError {
+	d.fupMemory[d.prefix+key] = MemoryCacheEntry[contract.FUPCacheEntry]{
+		Value: *entry,
 	}
 	return nil
 }

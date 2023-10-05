@@ -67,11 +67,32 @@ func (s FUPScope) GetLimit(key string) *int {
 	return nil
 }
 
+func (s FUPScope) HasLimit(key string) bool {
+	currentScope := s
+	pathSegments := strings.Split(key, ".")
+	index := 0
+	for _, segment := range pathSegments {
+		if value, ok := currentScope[segment]; ok {
+			if typedValue, ok := value.(FUPScope); ok {
+				currentScope = typedValue
+				if index == len(pathSegments)-1 {
+					return true
+				}
+				index++
+				continue
+			}
+			return false
+		}
+	}
+	return false
+}
+
 type ApiClientInterface interface {
 	GetClientId() string
 	GetClientSecret() string
 	GetApiKey() string
 	GetClientScope() *AccessScope
+	GetFUPScope() *FUPScope
 }
 type ApiUserInterface interface {
 	AddApiToken(apiToken ApiUserTokenInterface)
@@ -92,6 +113,7 @@ type ApiUserInterface interface {
 	SetResetRequestedAt(resetRequestedAt *time.Time)
 	GetResetToken() *string
 	SetResetToken(resetToken *string)
+	GetFUPScope() *FUPScope
 }
 type ApiUserTokenInterface interface {
 	SetToken(token string)

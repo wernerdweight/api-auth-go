@@ -11,6 +11,7 @@ type MemoryApiClient struct {
 	Secret      string                `json:"clientSecret" groups:"internal"`
 	ApiKey      string                `json:"apiKey" groups:"internal"`
 	AccessScope *contract.AccessScope `json:"clientScope" groups:"internal,public"`
+	FUPScope    *contract.FUPScope    `json:"fupConfig" groups:"internal"`
 }
 
 func (c *MemoryApiClient) GetClientId() string {
@@ -29,6 +30,10 @@ func (c *MemoryApiClient) GetClientScope() *contract.AccessScope {
 	return c.AccessScope
 }
 
+func (c *MemoryApiClient) GetFUPScope() *contract.FUPScope {
+	return c.FUPScope
+}
+
 // MemoryApiUser is the simplest struct that implements ApiUserInterface
 type MemoryApiUser struct {
 	Id                string                `json:"id" groups:"internal,public"`
@@ -38,6 +43,7 @@ type MemoryApiUser struct {
 	AccessScope       *contract.AccessScope `json:"userScope" groups:"internal,public"`
 	ConfirmationToken string                `json:"confirmationToken" groups:"internal"`
 	ResetToken        string                `json:"resetToken" groups:"internal"`
+	FUPScope          *contract.FUPScope    `json:"fupConfig" groups:"internal"`
 }
 
 func (u *MemoryApiUser) AddApiToken(apiToken contract.ApiUserTokenInterface) {
@@ -117,6 +123,10 @@ func (u *MemoryApiUser) GetResetToken() *string {
 
 func (u *MemoryApiUser) SetResetToken(resetToken *string) {
 	// no-op
+}
+
+func (u *MemoryApiUser) GetFUPScope() *contract.FUPScope {
+	return u.FUPScope
 }
 
 // MemoryApiUserToken is the simplest struct that implements ApiUserTokenInterface

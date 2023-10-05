@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/redis/go-redis/v9"
+	"github.com/wernerdweight/api-auth-go/auth/constants"
 	"github.com/wernerdweight/api-auth-go/auth/contract"
 	"github.com/wernerdweight/api-auth-go/auth/marshaller"
 	"time"
@@ -33,7 +34,7 @@ func (d *RedisCacheDriver) unmarshalClient(value string) (contract.ApiClientInte
 	apiClient := d.newApiClient()
 	err := json.Unmarshal([]byte(value), &apiClient)
 	if nil != err {
-		return nil, contract.NewAuthError(contract.CacheError, map[string]string{"details": err.Error()})
+		return nil, contract.NewInternalError(contract.CacheError, map[string]string{"details": err.Error()})
 	}
 	return apiClient, nil
 }
@@ -42,7 +43,7 @@ func (d *RedisCacheDriver) unmarshalUser(value string) (contract.ApiUserInterfac
 	apiUser := d.newApiUser()
 	err := json.Unmarshal([]byte(value), &apiUser)
 	if nil != err {
-		return nil, contract.NewAuthError(contract.CacheError, map[string]string{"details": err.Error()})
+		return nil, contract.NewInternalError(contract.CacheError, map[string]string{"details": err.Error()})
 	}
 	return apiUser, nil
 }
@@ -59,7 +60,7 @@ func (d *RedisCacheDriver) GetApiClientByIdAndSecret(id string, secret string) (
 		if redis.Nil == err {
 			return nil, nil
 		}
-		return nil, contract.NewAuthError(contract.CacheError, map[string]string{"details": err.Error()})
+		return nil, contract.NewInternalError(contract.CacheError, map[string]string{"details": err.Error()})
 	}
 	return d.unmarshalClient(value)
 }
@@ -71,11 +72,11 @@ func (d *RedisCacheDriver) SetApiClientByIdAndSecret(id string, secret string, c
 	}
 	value, err := json.Marshal(marshalled)
 	if nil != err {
-		return contract.NewAuthError(contract.CacheError, map[string]string{"details": err.Error()})
+		return contract.NewInternalError(contract.CacheError, map[string]string{"details": err.Error()})
 	}
 	err = d.getClient().Set(context.Background(), d.prefix+id+secret, value, d.ttl).Err()
 	if nil != err {
-		return contract.NewAuthError(contract.CacheError, map[string]string{"details": err.Error()})
+		return contract.NewInternalError(contract.CacheError, map[string]string{"details": err.Error()})
 	}
 	return nil
 }
@@ -86,7 +87,7 @@ func (d *RedisCacheDriver) GetApiClientByApiKey(apiKey string) (contract.ApiClie
 		if redis.Nil == err {
 			return nil, nil
 		}
-		return nil, contract.NewAuthError(contract.CacheError, map[string]string{"details": err.Error()})
+		return nil, contract.NewInternalError(contract.CacheError, map[string]string{"details": err.Error()})
 	}
 	return d.unmarshalClient(value)
 }
@@ -98,11 +99,11 @@ func (d *RedisCacheDriver) SetApiClientByApiKey(apiKey string, client contract.A
 	}
 	value, err := json.Marshal(marshalled)
 	if nil != err {
-		return contract.NewAuthError(contract.CacheError, map[string]string{"details": err.Error()})
+		return contract.NewInternalError(contract.CacheError, map[string]string{"details": err.Error()})
 	}
 	err = d.getClient().Set(context.Background(), d.prefix+apiKey, value, d.ttl).Err()
 	if nil != err {
-		return contract.NewAuthError(contract.CacheError, map[string]string{"details": err.Error()})
+		return contract.NewInternalError(contract.CacheError, map[string]string{"details": err.Error()})
 	}
 	return nil
 }
@@ -113,7 +114,7 @@ func (d *RedisCacheDriver) GetApiUserByToken(token string) (contract.ApiUserInte
 		if redis.Nil == err {
 			return nil, nil
 		}
-		return nil, contract.NewAuthError(contract.CacheError, map[string]string{"details": err.Error()})
+		return nil, contract.NewInternalError(contract.CacheError, map[string]string{"details": err.Error()})
 	}
 	return d.unmarshalUser(value)
 }
@@ -125,11 +126,48 @@ func (d *RedisCacheDriver) SetApiUserByToken(token string, user contract.ApiUser
 	}
 	value, err := json.Marshal(marshalled)
 	if nil != err {
-		return contract.NewAuthError(contract.CacheError, map[string]string{"details": err.Error()})
+		return contract.NewInternalError(contract.CacheError, map[string]string{"details": err.Error()})
 	}
 	err = d.getClient().Set(context.Background(), d.prefix+token, value, d.ttl).Err()
 	if nil != err {
-		return contract.NewAuthError(contract.CacheError, map[string]string{"details": err.Error()})
+		return contract.NewInternalError(contract.CacheError, map[string]string{"details": err.Error()})
+	}
+	return nil
+}
+
+func (d *RedisCacheDriver) GetFUPEntry(key string) (*contract.FUPCacheEntry, *contract.AuthError) {
+	value, err := d.getClient().Get(context.Background(), d.prefix+key).Result()
+	if nil != err {
+		if redis.Nil == err {
+			return &contract.FUPCacheEntry{
+				UpdatedAt: time.Time{},
+				Used: map[constants.Period]int{
+					constants.PeriodMinutely: 0,
+					constants.PeriodHourly:   0,
+					constants.PeriodDaily:    0,
+					constants.PeriodWeekly:   0,
+					constants.PeriodMonthly:  0,
+				},
+			}, nil
+		}
+		return nil, contract.NewInternalError(contract.CacheError, map[string]string{"details": err.Error()})
+	}
+	entry := &contract.FUPCacheEntry{}
+	err = json.Unmarshal([]byte(value), entry)
+	if nil != err {
+		return nil, contract.NewInternalError(contract.CacheError, map[string]string{"details": err.Error()})
+	}
+	return entry, nil
+}
+
+func (d *RedisCacheDriver) SetFUPEntry(key string, entry *contract.FUPCacheEntry) *contract.AuthError {
+	value, err := json.Marshal(entry)
+	if nil != err {
+		return contract.NewInternalError(contract.CacheError, map[string]string{"details": err.Error()})
+	}
+	err = d.getClient().Set(context.Background(), d.prefix+key, value, 0).Err()
+	if nil != err {
+		return contract.NewInternalError(contract.CacheError, map[string]string{"details": err.Error()})
 	}
 	return nil
 }

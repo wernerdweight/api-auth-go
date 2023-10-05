@@ -1,6 +1,9 @@
 package contract
 
-import "errors"
+import (
+	"errors"
+	"net/http"
+)
 
 type AuthErrorCode int
 
@@ -8,6 +11,7 @@ type AuthError struct {
 	Err     error
 	Code    AuthErrorCode
 	Payload interface{}
+	Status  int
 }
 
 const (
@@ -34,6 +38,8 @@ const (
 	ResetTokenExpired
 	CacheError
 	MarshallingError
+	FUPCacheDisabled
+	RequestLimitDepleted
 )
 
 var AuthErrorCodes = map[AuthErrorCode]string{
@@ -60,6 +66,8 @@ var AuthErrorCodes = map[AuthErrorCode]string{
 	ResetTokenExpired:         "reset token expired",
 	CacheError:                "cache error",
 	MarshallingError:          "marshalling error",
+	FUPCacheDisabled:          "cache driver needs to be configured for the FUP checker to work",
+	RequestLimitDepleted:      "request limit depleted",
 }
 
 func NewAuthError(code AuthErrorCode, payload interface{}) *AuthError {
@@ -67,5 +75,24 @@ func NewAuthError(code AuthErrorCode, payload interface{}) *AuthError {
 		Err:     errors.New(AuthErrorCodes[code]),
 		Code:    code,
 		Payload: payload,
+		Status:  http.StatusUnauthorized,
+	}
+}
+
+func NewFUPError(code AuthErrorCode, payload interface{}) *AuthError {
+	return &AuthError{
+		Err:     errors.New(AuthErrorCodes[code]),
+		Code:    code,
+		Payload: payload,
+		Status:  http.StatusTooManyRequests,
+	}
+}
+
+func NewInternalError(code AuthErrorCode, payload interface{}) *AuthError {
+	return &AuthError{
+		Err:     errors.New(AuthErrorCodes[code]),
+		Code:    code,
+		Payload: payload,
+		Status:  http.StatusInternalServerError,
 	}
 }

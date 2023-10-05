@@ -11,5 +11,4 @@ type AccessScopeCheckerInterface interface {
 
 type FUPCheckerInterface interface {
 	Check(fup *FUPScope, c *gin.Context, key string) FUPScopeLimits
-	Log(c *gin.Context) error
 }

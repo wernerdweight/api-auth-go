@@ -29,7 +29,7 @@ func (p GormApiClientProvider) ProvideByIdAndSecret(id string, secret string) (c
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, contract.NewAuthError(contract.ClientNotFound, nil)
 		}
-		return nil, contract.NewAuthError(contract.DatabaseError, map[string]string{"details": result.Error.Error()})
+		return nil, contract.NewInternalError(contract.DatabaseError, map[string]string{"details": result.Error.Error()})
 	}
 	return apiClient, nil
 }
@@ -44,7 +44,7 @@ func (p GormApiClientProvider) ProvideByApiKey(apiKey string) (contract.ApiClien
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, contract.NewAuthError(contract.ClientNotFound, nil)
 		}
-		return nil, contract.NewAuthError(contract.DatabaseError, map[string]string{"details": result.Error.Error()})
+		return nil, contract.NewInternalError(contract.DatabaseError, map[string]string{"details": result.Error.Error()})
 	}
 	return apiClient, nil
 }
@@ -53,7 +53,7 @@ func (p GormApiClientProvider) Save(client contract.ApiClientInterface) *contrac
 	conn := p.getConnection()
 	result := conn.Save(client)
 	if nil != result.Error {
-		return contract.NewAuthError(contract.DatabaseError, map[string]string{"details": result.Error.Error()})
+		return contract.NewInternalError(contract.DatabaseError, map[string]string{"details": result.Error.Error()})
 	}
 	return nil
 }
@@ -97,7 +97,7 @@ func (p GormApiUserProvider) ProvideByLogin(login string) (contract.ApiUserInter
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, contract.NewAuthError(contract.UserNotFound, nil)
 		}
-		return nil, contract.NewAuthError(contract.DatabaseError, map[string]string{"details": result.Error.Error()})
+		return nil, contract.NewInternalError(contract.DatabaseError, map[string]string{"details": result.Error.Error()})
 	}
 	return apiUser, nil
 }
@@ -112,7 +112,7 @@ func (p GormApiUserProvider) ProvideByToken(token string) (contract.ApiUserInter
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, contract.NewAuthError(contract.UserTokenNotFound, nil)
 		}
-		return nil, contract.NewAuthError(contract.DatabaseError, map[string]string{"details": result.Error.Error()})
+		return nil, contract.NewInternalError(contract.DatabaseError, map[string]string{"details": result.Error.Error()})
 	}
 	if apiUserToken.GetExpirationDate().Before(time.Now()) {
 		return nil, contract.NewAuthError(contract.UserTokenExpired, map[string]time.Time{"expiredAt": apiUserToken.GetExpirationDate()})
@@ -130,7 +130,7 @@ func (p GormApiUserProvider) ProvideByConfirmationToken(token string) (contract.
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, contract.NewAuthError(contract.UserNotFound, nil)
 		}
-		return nil, contract.NewAuthError(contract.DatabaseError, map[string]string{"details": result.Error.Error()})
+		return nil, contract.NewInternalError(contract.DatabaseError, map[string]string{"details": result.Error.Error()})
 	}
 	// check token expiration
 	expirationInterval := config.ProviderInstance.GetConfirmationTokenExpirationInterval()
@@ -151,7 +151,7 @@ func (p GormApiUserProvider) ProvideByResetToken(token string) (contract.ApiUser
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, contract.NewAuthError(contract.UserNotFound, nil)
 		}
-		return nil, contract.NewAuthError(contract.DatabaseError, map[string]string{"details": result.Error.Error()})
+		return nil, contract.NewInternalError(contract.DatabaseError, map[string]string{"details": result.Error.Error()})
 	}
 	// check token expiration
 	expirationInterval := config.ProviderInstance.GetConfirmationTokenExpirationInterval()
@@ -177,7 +177,7 @@ func (p GormApiUserProvider) Save(user contract.ApiUserInterface) *contract.Auth
 	conn := p.getConnection()
 	result := conn.Save(user)
 	if nil != result.Error {
-		return contract.NewAuthError(contract.DatabaseError, map[string]string{"details": result.Error.Error()})
+		return contract.NewInternalError(contract.DatabaseError, map[string]string{"details": result.Error.Error()})
 	}
 	return nil
 }

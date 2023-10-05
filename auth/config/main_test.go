@@ -5,6 +5,7 @@ import (
 	"github.com/wernerdweight/api-auth-go/auth/cache"
 	"github.com/wernerdweight/api-auth-go/auth/checker"
 	"github.com/wernerdweight/api-auth-go/auth/contract"
+	"github.com/wernerdweight/api-auth-go/auth/fup"
 	"testing"
 	"time"
 )
@@ -180,7 +181,7 @@ func (s *TestSuite) TestProvider_GetClientFUPChecker() {
 	s.Nil(s.provider.GetClientFUPChecker())
 	s.provider.Init(contract.Config{
 		Client: contract.ClientConfig{
-			FUPChecker: nil, // TODO: fup.PathAccessScopeChecker{},
+			FUPChecker: fup.PathAndMethodFUPChecker{},
 		},
 	})
 	s.NotNil(s.provider.GetClientFUPChecker())
@@ -221,7 +222,7 @@ func (s *TestSuite) TestProvider_GetUserFUPChecker() {
 	s.Nil(s.provider.GetUserFUPChecker())
 	s.provider.Init(contract.Config{
 		User: &contract.UserConfig{
-			FUPChecker: nil, // TODO: fup.PathAccessScopeChecker{},
+			FUPChecker: fup.PathAndMethodFUPChecker{},
 		},
 	})
 	s.NotNil(s.provider.GetUserFUPChecker())
@@ -318,7 +319,7 @@ func (s *TestSuite) TestProvider_IsClientFUPEnabled() {
 	s.False(s.provider.IsClientFUPEnabled())
 	s.provider.Init(contract.Config{
 		Client: contract.ClientConfig{
-			FUPChecker: nil, // TODO: fup.PathAccessScopeChecker{},
+			FUPChecker: fup.PathAndMethodFUPChecker{},
 		},
 	})
 	s.True(s.provider.IsClientFUPEnabled())
@@ -328,7 +329,7 @@ func (s *TestSuite) TestProvider_IsUserFUPEnabled() {
 	s.False(s.provider.IsUserFUPEnabled())
 	s.provider.Init(contract.Config{
 		User: &contract.UserConfig{
-			FUPChecker: nil, // TODO: fup.PathAccessScopeChecker{},
+			FUPChecker: fup.PathAndMethodFUPChecker{},
 		},
 	})
 	s.True(s.provider.IsUserFUPEnabled())

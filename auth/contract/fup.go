@@ -13,11 +13,27 @@ type FUPLimits struct {
 
 type FUPScopeLimits struct {
 	Accessible constants.ScopeAccessibility
-	Limits     []FUPLimits
-	Error      error
+	Limits     map[constants.Period]FUPLimits
+	Error      *AuthError
 }
 
 type FUPCacheEntry struct {
-	UpdatedAt time.Time
-	Used      map[constants.Period]int
+	UpdatedAt time.Time                `json:"updatedAt"`
+	Used      map[constants.Period]int `json:"used"`
+}
+
+func (e *FUPCacheEntry) GetUsed(period constants.Period) int {
+	if nil == e.Used {
+		return 0
+	}
+	return e.Used[period]
+}
+
+func (e *FUPCacheEntry) Increment() {
+	if nil == e.Used {
+		e.Used = make(map[constants.Period]int)
+	}
+	for _, period := range constants.FUPScopePeriods {
+		e.Used[period]++
+	}
 }
