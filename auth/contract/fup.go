@@ -3,13 +3,14 @@ package contract
 import (
 	"encoding/json"
 	"github.com/wernerdweight/api-auth-go/auth/constants"
+	"log"
 	"time"
 )
 
 type FUPLimits struct {
-	Limit  int
-	Used   int
-	Period constants.Period
+	Limit  int              `json:"limit"`
+	Used   int              `json:"used"`
+	Period constants.Period `json:"-"`
 }
 
 type FUPScopeLimits struct {
@@ -24,9 +25,21 @@ func (l *FUPScopeLimits) GetLimitsHeader() string {
 	}
 	header, err := json.Marshal(l.Limits)
 	if nil != err {
+		log.Printf("can't serialize FUP limits header: %+v", err)
 		return ""
 	}
 	return string(header)
+}
+
+func (l *FUPScopeLimits) GetRetryAfter() int {
+	if l.Accessible != constants.ScopeAccessibilityForbidden {
+		return -1
+	}
+	for period := range l.Limits {
+		// there will always be exactly one limit
+		return int(time.Until(period.GetResetTime()).Seconds())
+	}
+	return -1
 }
 
 type FUPCacheEntry struct {
@@ -44,8 +57,15 @@ func (e *FUPCacheEntry) GetUsed(period constants.Period) int {
 func (e *FUPCacheEntry) Increment() {
 	if nil == e.Used {
 		e.Used = make(map[constants.Period]int)
+		e.UpdatedAt = time.Now()
 	}
+	now := time.Now()
 	for _, period := range constants.FUPScopePeriods {
-		e.Used[period]++
+		if period.GetFormatToCompare(e.UpdatedAt) == period.GetFormatToCompare(now) {
+			e.Used[period]++
+			continue
+		}
+		e.Used[period] = 1
 	}
+	e.UpdatedAt = time.Now()
 }

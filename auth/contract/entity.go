@@ -51,7 +51,7 @@ func (s FUPScope) GetLimit(key string) *int {
 	index := 0
 	for _, segment := range pathSegments {
 		if value, ok := currentScope[segment]; ok {
-			if typedValue, ok := value.(FUPScope); ok {
+			if typedValue, ok := value.(map[string]any); ok {
 				currentScope = typedValue
 				index++
 				continue
@@ -59,6 +59,20 @@ func (s FUPScope) GetLimit(key string) *int {
 			if typedValue, ok := value.(int); ok {
 				if index == len(pathSegments)-1 {
 					return &typedValue
+				}
+				return nil
+			}
+			if typedValue, ok := value.(float64); ok {
+				if index == len(pathSegments)-1 {
+					intValue := int(typedValue)
+					return &intValue
+				}
+				return nil
+			}
+			if typedValue, ok := value.(float32); ok {
+				if index == len(pathSegments)-1 {
+					intValue := int(typedValue)
+					return &intValue
 				}
 				return nil
 			}

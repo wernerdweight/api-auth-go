@@ -1,6 +1,7 @@
 package security
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/wernerdweight/api-auth-go/auth/config"
 	"github.com/wernerdweight/api-auth-go/auth/constants"
@@ -134,6 +135,7 @@ func authenticateOnBehalf(c *gin.Context) *contract.AuthError {
 			return fupLimits.Error
 		}
 		if fupLimits.Accessible == constants.ScopeAccessibilityForbidden {
+			c.Header(constants.RetryAfterHeader, fmt.Sprintf("%d", fupLimits.GetRetryAfter()))
 			return contract.NewFUPError(contract.RequestLimitDepleted, fupLimits.Limits)
 		}
 		header := fupLimits.GetLimitsHeader()
@@ -173,6 +175,7 @@ func Authenticate(c *gin.Context) *contract.AuthError {
 			return fupLimits.Error
 		}
 		if fupLimits.Accessible == constants.ScopeAccessibilityForbidden {
+			c.Header(constants.RetryAfterHeader, fmt.Sprintf("%d", fupLimits.GetRetryAfter()))
 			return contract.NewFUPError(contract.RequestLimitDepleted, fupLimits.Limits)
 		}
 		header := fupLimits.GetLimitsHeader()

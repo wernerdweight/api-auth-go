@@ -108,5 +108,6 @@ func NewMemoryCacheDriver() *MemoryCacheDriver {
 	return &MemoryCacheDriver{
 		apiClientMemory: make(map[string]MemoryCacheEntry[contract.ApiClientInterface]),
 		apiUserMemory:   make(map[string]MemoryCacheEntry[contract.ApiUserInterface]),
+		fupMemory:       make(map[string]MemoryCacheEntry[contract.FUPCacheEntry]),
 	}
 }

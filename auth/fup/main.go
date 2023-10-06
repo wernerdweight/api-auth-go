@@ -10,7 +10,7 @@ import (
 )
 
 func checkLimits(scope *contract.FUPScope, key string, path string, cacheDriver contract.CacheDriverInterface) (map[constants.Period]contract.FUPLimits, *contract.FUPScopeLimits) {
-	var limits map[constants.Period]contract.FUPLimits
+	limits := make(map[constants.Period]contract.FUPLimits)
 	cacheKey := fmt.Sprintf("fup_%s_%s", key, strings.Replace(path, "/", "-", -1))
 	cacheEntry, err := cacheDriver.GetFUPEntry(cacheKey)
 	if nil != err {
@@ -74,11 +74,6 @@ func mergeLimits(limits map[constants.Period]contract.FUPLimits, pathLimits map[
 }
 
 func check(path string, scope *contract.FUPScope, c *gin.Context, key string) contract.FUPScopeLimits {
-	if nil == scope || nil == c || nil == c.Request || nil == c.Request.URL {
-		// no limitations by default
-		return contract.FUPScopeLimits{Accessible: constants.ScopeAccessibilityUnlimited}
-	}
-
 	hasRootLimit := !scope.HasLimit("*")
 	hasPathLimit := !scope.HasLimit(path)
 	if !hasRootLimit && !hasPathLimit {
