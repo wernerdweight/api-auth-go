@@ -20,5 +20,5 @@ func (ch PathAndMethodFUPChecker) Check(scope *contract.FUPScope, c *gin.Context
 	path := strings.ToLower(c.Request.URL.Path)
 	method := strings.ToLower(c.Request.Method)
 	combinedPath := fmt.Sprintf("%s:%s", method, path)
-	return check(combinedPath, scope, c, key)
+	return check(combinedPath, scope, key)
 }

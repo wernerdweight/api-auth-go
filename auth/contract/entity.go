@@ -87,7 +87,7 @@ func (s FUPScope) HasLimit(key string) bool {
 	index := 0
 	for _, segment := range pathSegments {
 		if value, ok := currentScope[segment]; ok {
-			if typedValue, ok := value.(FUPScope); ok {
+			if typedValue, ok := value.(map[string]any); ok {
 				currentScope = typedValue
 				if index == len(pathSegments)-1 {
 					return true

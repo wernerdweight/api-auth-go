@@ -17,5 +17,5 @@ func (ch PathFUPChecker) Check(scope *contract.FUPScope, c *gin.Context, key str
 		return contract.FUPScopeLimits{Accessible: constants.ScopeAccessibilityUnlimited}
 	}
 	path := strings.ToLower(c.Request.URL.Path)
-	return check(path, scope, c, key)
+	return check(path, scope, key)
 }

@@ -2,7 +2,6 @@ package fup
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"github.com/wernerdweight/api-auth-go/auth/config"
 	"github.com/wernerdweight/api-auth-go/auth/constants"
 	"github.com/wernerdweight/api-auth-go/auth/contract"
@@ -73,9 +72,9 @@ func mergeLimits(limits map[constants.Period]contract.FUPLimits, pathLimits map[
 	return limits
 }
 
-func check(path string, scope *contract.FUPScope, c *gin.Context, key string) contract.FUPScopeLimits {
-	hasRootLimit := !scope.HasLimit("*")
-	hasPathLimit := !scope.HasLimit(path)
+func check(path string, scope *contract.FUPScope, key string) contract.FUPScopeLimits {
+	hasRootLimit := scope.HasLimit("*")
+	hasPathLimit := scope.HasLimit(path)
 	if !hasRootLimit && !hasPathLimit {
 		// no limitations by default
 		return contract.FUPScopeLimits{Accessible: constants.ScopeAccessibilityUnlimited}
