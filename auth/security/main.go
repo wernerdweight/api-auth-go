@@ -11,15 +11,17 @@ import (
 )
 
 func shouldAuthenticate(c *gin.Context) bool {
-	if targetHandlers := config.ProviderInstance.GetTargetHandlers(); targetHandlers != nil {
-		for _, targetHandler := range *targetHandlers {
-			matched, err := regexp.MatchString(targetHandler, c.Request.URL.String())
-			if nil != err {
-				log.Printf("can't match target handler pattern '%s': %v", targetHandler, err)
-			}
-			if matched {
-				return true
-			}
+	targetHandlers := config.ProviderInstance.GetTargetHandlers()
+	if nil == targetHandlers || len(*targetHandlers) == 0 {
+		return true
+	}
+	for _, targetHandler := range *targetHandlers {
+		matched, err := regexp.MatchString(targetHandler, c.Request.URL.String())
+		if nil != err {
+			log.Printf("can't match target handler pattern '%s': %v", targetHandler, err)
+		}
+		if matched {
+			return true
 		}
 	}
 	return false

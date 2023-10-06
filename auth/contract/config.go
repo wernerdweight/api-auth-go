@@ -17,7 +17,7 @@ type ClientConfig struct {
 type UserConfig struct {
 	// Provider: your provider that implements ApiUserProviderInterface
 	Provider ApiUserProviderInterface[ApiUserInterface]
-	// TokenFactory: your token type that implements ApiUserTokenInterface
+	// TokenFactory: generates your token type that implements ApiUserTokenInterface
 	TokenFactory func() ApiUserTokenInterface
 	// ApiTokenExpirationInterval: token expiration in seconds - defaults to 2,592,000 (30 days)
 	ApiTokenExpirationInterval *time.Duration
@@ -60,7 +60,7 @@ type Config struct {
 	// Mode: modes of authentication (client id + secret and user token vs. api key)
 	Mode *ModesConfig
 
-	// TargetHandlers: list of handlers to target (optional)
+	// TargetHandlers: list of handlers to target (optional; if you omit target handlers, all handlers will be targeted)
 	TargetHandlers *[]string
 	// '*'            	# all handlers
 	// '/v1/*'   		# all handlers starting with '/v1/'
