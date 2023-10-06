@@ -773,7 +773,7 @@ func Close() error {
 
 ```
 
-** Retrieving authenticated client/user in targeted handlers/routes **
+### Retrieving authenticated client/user in targeted handlers/routes
 
 ```go
 // pkg/routes/main.go (or anywhere else)
