@@ -109,7 +109,8 @@ func registrationRequestHandler(c *gin.Context) {
 	apiUser := provider.ProvideNew(request.Email, encryptedPassword)
 	// call external service to set user details and other fields (event)
 	err = events.GetEventHub().DispatchSync(&contract.CreateNewApiUserEvent{
-		ApiUser: apiUser,
+		ApiUser:       apiUser,
+		PlainPassword: request.Password,
 	})
 	if nil != err {
 		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{

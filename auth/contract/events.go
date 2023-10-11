@@ -30,7 +30,8 @@ func (event *ValidateLoginInformationEvent) GetPayload() events.EventPayload {
 }
 
 type CreateNewApiUserEvent struct {
-	ApiUser ApiUserInterface
+	ApiUser       ApiUserInterface
+	PlainPassword string
 }
 
 func (event *CreateNewApiUserEvent) GetKey() events.EventKey {
