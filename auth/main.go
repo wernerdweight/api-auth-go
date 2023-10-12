@@ -13,7 +13,10 @@ import (
 func Middleware(r *gin.Engine, c contract.Config) gin.HandlerFunc {
 	log.Println("setting up api-auth middleware...")
 	config.ProviderInstance.Init(c)
-	routes.Register(r)
+	defer func() {
+		// routes need to be registered asynchronously after the middleware is applied, so that is gets applied to the routes as well
+		go routes.Register(r)
+	}()
 
 	if config.ProviderInstance.IsCacheEnabled() {
 		log.Println("initializing cache driver...")

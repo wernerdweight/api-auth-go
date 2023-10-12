@@ -62,7 +62,7 @@ type Config struct {
 
 	// TargetHandlers: list of handlers to target (optional; if you omit target handlers, all handlers will be targeted)
 	TargetHandlers *[]string
-	// '*'            	# all handlers
+	// '.*'            	# all handlers
 	// '/v1/*'   		# all handlers starting with '/v1/'
 	// '/v1/some/path'  # only '/v1/some/path' handler
 

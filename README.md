@@ -69,8 +69,8 @@ Full configuration structure (only client configuration is mandatory, default va
 
     // TargetHandlers: list of handlers to target (optional; if you omit target handlers, all handlers will be targeted)
     TargetHandlers *[]string
-    // '*'            	# all handlers
-    // '/v1/*'   		# all handlers starting with '/v1/'
+    // '.*'            	# all handlers
+    // '/v1/.*'   		# all handlers starting with '/v1/'
     // '/v1/some/path'  # only '/v1/some/path' handler
     
     // ExcludeOptionsRequests: if true, requests using the OPTIONS method will be ignored (authentication will be skipped) - default false

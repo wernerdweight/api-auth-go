@@ -3,6 +3,7 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/wernerdweight/api-auth-go/auth/config"
+	"github.com/wernerdweight/api-auth-go/auth/constants"
 	"github.com/wernerdweight/api-auth-go/auth/contract"
 	"github.com/wernerdweight/api-auth-go/auth/encoder"
 	"github.com/wernerdweight/events-go"
@@ -159,9 +160,16 @@ func registrationConfirmHandler(c *gin.Context) {
 	apiUser.SetConfirmationToken(nil)
 	apiUser.SetConfirmationRequestedAt(nil)
 
+	apiClient, _ := c.Get(constants.ApiClient)
+	var typedApiClient contract.ApiClientInterface
+	if nil != apiClient {
+		typedApiClient = apiClient.(contract.ApiClientInterface)
+	}
+
 	// call external service to set user details and other fields (event)
 	err := events.GetEventHub().DispatchSync(&contract.ActivateApiUserEvent{
-		ApiUser: apiUser,
+		ApiUser:   apiUser,
+		ApiClient: typedApiClient,
 	})
 	if nil != err {
 		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{

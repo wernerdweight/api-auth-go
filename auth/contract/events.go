@@ -55,7 +55,8 @@ func (event *RegistrationRequestCompletedEvent) GetPayload() events.EventPayload
 }
 
 type ActivateApiUserEvent struct {
-	ApiUser ApiUserInterface
+	ApiUser   ApiUserInterface
+	ApiClient ApiClientInterface
 }
 
 func (event *ActivateApiUserEvent) GetKey() events.EventKey {
