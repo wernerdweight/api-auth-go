@@ -11,6 +11,18 @@ import (
 )
 
 func shouldAuthenticate(c *gin.Context) bool {
+	excludeHandlers := config.ProviderInstance.GetExcludeHandlers()
+	if nil != excludeHandlers && len(*excludeHandlers) > 0 {
+		for _, excludeHandler := range *excludeHandlers {
+			matched, err := regexp.MatchString(excludeHandler, c.Request.URL.String())
+			if nil != err {
+				log.Printf("can't match exclude handler pattern '%s': %v", excludeHandler, err)
+			}
+			if matched {
+				return false
+			}
+		}
+	}
 	targetHandlers := config.ProviderInstance.GetTargetHandlers()
 	if nil == targetHandlers || len(*targetHandlers) == 0 {
 		return true

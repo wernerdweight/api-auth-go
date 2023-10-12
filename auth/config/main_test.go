@@ -87,6 +87,7 @@ func (s *TestSuite) SetupTest() {
 				ClientIdAndSecret: &defaultClientIdAndSecretMode,
 			},
 			TargetHandlers:         nil,
+			ExcludeHandlers:        nil,
 			ExcludeOptionsRequests: &defaultExcludeOptionsRequests,
 			Cache: &contract.CacheConfig{
 				Driver: nil,
@@ -136,11 +137,20 @@ func (s *TestSuite) TestProvider_IsClientIdAndSecretModeEnabled() {
 
 func (s *TestSuite) TestProvider_GetTargetHandlers() {
 	s.Nil(s.provider.GetTargetHandlers())
-	handlers := []string{"*"}
+	handlers := []string{".*"}
 	s.provider.Init(contract.Config{
 		TargetHandlers: &handlers,
 	})
 	s.Equal(&handlers, s.provider.GetTargetHandlers())
+}
+
+func (s *TestSuite) TestProvider_GetExcludeHandlers() {
+	s.Nil(s.provider.GetExcludeHandlers())
+	handlers := []string{".*"}
+	s.provider.Init(contract.Config{
+		ExcludeHandlers: &handlers,
+	})
+	s.Equal(&handlers, s.provider.GetExcludeHandlers())
 }
 
 func (s *TestSuite) TestProvider_GetClientProvider() {

@@ -72,6 +72,9 @@ Full configuration structure (only client configuration is mandatory, default va
     // '.*'            	# all handlers
     // '/v1/.*'   		# all handlers starting with '/v1/'
     // '/v1/some/path'  # only '/v1/some/path' handler
+
+	// ExcludeHandlers: list of handlers to exclude (optional; if you omit exclude handlers, no handlers will be excluded)
+	ExcludeHandlers *[]string
     
     // ExcludeOptionsRequests: if true, requests using the OPTIONS method will be ignored (authentication will be skipped) - default false
     ExcludeOptionsRequests *bool

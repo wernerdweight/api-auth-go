@@ -22,6 +22,10 @@ func (p *Provider) GetTargetHandlers() *[]string {
 	return p.config.TargetHandlers
 }
 
+func (p *Provider) GetExcludeHandlers() *[]string {
+	return p.config.ExcludeHandlers
+}
+
 func (p *Provider) GetClientProvider() contract.ApiClientProviderInterface[contract.ApiClientInterface] {
 	return p.config.Client.Provider
 }
@@ -172,6 +176,10 @@ func (p *Provider) Init(config contract.Config) {
 		p.config.TargetHandlers = config.TargetHandlers
 	}
 
+	if nil != config.ExcludeHandlers {
+		p.config.ExcludeHandlers = config.ExcludeHandlers
+	}
+
 	if nil != config.ExcludeOptionsRequests {
 		p.config.ExcludeOptionsRequests = config.ExcludeOptionsRequests
 	}
@@ -217,6 +225,7 @@ var ProviderInstance = &Provider{
 			ClientIdAndSecret: &defaultClientIdAndSecretMode,
 		},
 		TargetHandlers:         nil,
+		ExcludeHandlers:        nil,
 		ExcludeOptionsRequests: &defaultExcludeOptionsRequests,
 		Cache: &contract.CacheConfig{
 			Driver: nil,
