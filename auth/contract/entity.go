@@ -2,11 +2,33 @@ package contract
 
 import (
 	"github.com/wernerdweight/api-auth-go/auth/constants"
+	"regexp"
 	"strings"
 	"time"
 )
 
 type AccessScope map[string]any
+
+func (s AccessScope) getStringAccessibility(index int, pathSegments []string, typedValue string) constants.ScopeAccessibility {
+	if index == len(pathSegments)-1 {
+		if typedValue == string(constants.ScopeAccessibilityAccessible) {
+			return constants.ScopeAccessibilityAccessible
+		}
+		if typedValue == string(constants.ScopeAccessibilityOnBehalf) {
+			return constants.ScopeAccessibilityOnBehalf
+		}
+	}
+	return constants.ScopeAccessibilityForbidden
+}
+
+func (s AccessScope) getBoolAccessibility(index int, pathSegments []string, typedValue bool) constants.ScopeAccessibility {
+	if index == len(pathSegments)-1 {
+		if typedValue {
+			return constants.ScopeAccessibilityAccessible
+		}
+	}
+	return constants.ScopeAccessibilityForbidden
+}
 
 func (s AccessScope) GetAccessibility(key string) constants.ScopeAccessibility {
 	currentScope := s
@@ -20,23 +42,32 @@ func (s AccessScope) GetAccessibility(key string) constants.ScopeAccessibility {
 				continue
 			}
 			if typedValue, ok := value.(string); ok {
-				if index == len(pathSegments)-1 {
-					if typedValue == string(constants.ScopeAccessibilityAccessible) {
-						return constants.ScopeAccessibilityAccessible
-					}
-					if typedValue == string(constants.ScopeAccessibilityOnBehalf) {
-						return constants.ScopeAccessibilityOnBehalf
-					}
-				}
-				return constants.ScopeAccessibilityForbidden
+				return s.getStringAccessibility(index, pathSegments, typedValue)
 			}
 			if typedValue, ok := value.(bool); ok {
-				if index == len(pathSegments)-1 {
-					if typedValue {
-						return constants.ScopeAccessibilityAccessible
+				return s.getBoolAccessibility(index, pathSegments, typedValue)
+			}
+		}
+		for scopeEntry, value := range currentScope {
+			// regex-enabled scope keys must start with `r#`
+			if strings.Index(scopeEntry, "r#") != 0 {
+				continue
+			}
+			scopeEntryRegex, err := regexp.Compile(scopeEntry[2:])
+			if nil == err {
+				if scopeEntryRegex.MatchString(segment) {
+					if typedValue, ok := value.(AccessScope); ok {
+						currentScope = typedValue
+						index++
+						continue
+					}
+					if typedValue, ok := value.(string); ok {
+						return s.getStringAccessibility(index, pathSegments, typedValue)
+					}
+					if typedValue, ok := value.(bool); ok {
+						return s.getBoolAccessibility(index, pathSegments, typedValue)
 					}
 				}
-				return constants.ScopeAccessibilityForbidden
 			}
 		}
 	}

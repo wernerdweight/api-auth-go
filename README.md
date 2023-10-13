@@ -334,6 +334,8 @@ The default PathChecker expects a structure like this:
   "/some/other/path": false,
   // see `on-behalf` access mode below
   "/yet/another/path": 'on-behalf',
+  // regexes are also supported with `r#` prefix
+  "r#^/some/regex/[^/]+/?$": true,
 }
 ```
 
@@ -347,6 +349,8 @@ This package also includes a `PathAndMethodChecker`, which also checks based on 
   "post:/some/other/path": false,
   // see `on-behalf` access mode below
   "delete:/yet/another/path": 'on-behalf',
+  // regexes are also supported with `r#` prefix
+  "r#get:^/some/regex/[^/]+/?$": true,
 }
 ```
 

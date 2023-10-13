@@ -130,6 +130,36 @@ func TestAccessScope_GetAccessibility(t *testing.T) {
 			args:  args{path: "test.test.test.nope"},
 			want:  constants.ScopeAccessibilityForbidden,
 		},
+		{
+			name:  "Path is in scope, on-behalf, multiple keys, with wrong (not-enabled) regex",
+			scope: AccessScope{"/test": true, "/test/[^/]+$": "on-behalf"},
+			args:  args{path: "/test/abC-1De23f"},
+			want:  constants.ScopeAccessibilityForbidden,
+		},
+		{
+			name:  "Path is in scope, on-behalf, multiple keys, with regex",
+			scope: AccessScope{"/test": true, "r#^/test/[^/]+$": "on-behalf"},
+			args:  args{path: "/test/abC-1De23f"},
+			want:  constants.ScopeAccessibilityOnBehalf,
+		},
+		{
+			name:  "Path is in scope, multiple keys, with regex",
+			scope: AccessScope{"/test": true, "r#^/test/[^/]+/?$": true},
+			args:  args{path: "/test/abC-1De23f/"},
+			want:  constants.ScopeAccessibilityAccessible,
+		},
+		{
+			name:  "Path not in scope, multiple keys, with regex",
+			scope: AccessScope{"/test": true, "r#^/test/[^/]+/?$": "on-behalf"},
+			args:  args{path: "/test/abC-1De23f/abcd"},
+			want:  constants.ScopeAccessibilityForbidden,
+		},
+		{
+			name:  "Nested scope, on-behalf, multiple keys, with regex",
+			scope: AccessScope{"/test": true, "nested1": AccessScope{"r#^/test/[^/]+$": AccessScope{"nested2": "on-behalf"}}},
+			args:  args{path: "nested1./test/abC-1De23f.nested2"},
+			want:  constants.ScopeAccessibilityOnBehalf,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
