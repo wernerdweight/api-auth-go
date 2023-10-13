@@ -6,10 +6,11 @@ require (
 	github.com/alexedwards/argon2id v0.0.0-20230305115115-4b3c3280a736
 	github.com/gin-gonic/gin v1.9.1
 	github.com/google/uuid v1.3.1
+	github.com/jinzhu/now v1.1.5
 	github.com/liip/sheriff v0.11.1
 	github.com/redis/go-redis/v9 v9.2.0
 	github.com/stretchr/testify v1.8.4
-	github.com/wernerdweight/events-go v1.1.0
+	github.com/wernerdweight/events-go v1.1.1
 	github.com/wernerdweight/token-generator-go v1.0.1
 	golang.org/x/crypto v0.9.0
 	gorm.io/gorm v1.25.4
@@ -29,7 +30,6 @@ require (
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/hashicorp/go-version v0.0.0-20161031182605-e96d38404026 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
-	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.4 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect

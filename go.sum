@@ -81,8 +81,8 @@ github.com/twitchyliquid64/golang-asm v0.15.1 h1:SU5vSMR7hnwNxj24w34ZyCi/FmDZTkS
 github.com/twitchyliquid64/golang-asm v0.15.1/go.mod h1:a1lVb/DtPvCB8fslRZhAngC2+aY1QWCk3Cedj/Gdt08=
 github.com/ugorji/go/codec v1.2.11 h1:BMaWp1Bb6fHwEtbplGBGJ498wD+LKlNSl25MjdZY4dU=
 github.com/ugorji/go/codec v1.2.11/go.mod h1:UNopzCgEMSXjBc6AOMqYvWC1ktqTAfzJZUZgYf6w6lg=
-github.com/wernerdweight/events-go v1.1.0 h1:sj+Fg8AzlgNz4sR1VmVycMe3rTxDN5oyzKIPHH9Ocfc=
-github.com/wernerdweight/events-go v1.1.0/go.mod h1:Kx7l2hfrAa2/UPbM5a/aqa0yVC1Bf7cu+Q2s2CQr7o8=
+github.com/wernerdweight/events-go v1.1.1 h1:9DmSvFBaNl+ZN+46iGih1hLaHP2ftPghKAiBXsz4Ux8=
+github.com/wernerdweight/events-go v1.1.1/go.mod h1:Kx7l2hfrAa2/UPbM5a/aqa0yVC1Bf7cu+Q2s2CQr7o8=
 github.com/wernerdweight/token-generator-go v1.0.1 h1:dl2D81HPzjQqkTSGzEP2qDv6T+PuLYcn4EGeGc1vjas=
 github.com/wernerdweight/token-generator-go v1.0.1/go.mod h1:5kb3pcJbUcoofF+3tb5cTQ9lsUJgmYNVtFWWXx5EMEQ=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
