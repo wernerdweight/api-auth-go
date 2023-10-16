@@ -583,6 +583,11 @@ The PathChecker expects a structure like this:
     "minutely": 123,
     "hourly": 456,
     "daily": 789,
+  },
+  // regexes are also supported with `r#` prefix
+  "r#^/some/regex/[^/]+/?$": {
+    "minutely": 123,
+    "daily": 789,
   }
 }
 ```
@@ -605,6 +610,11 @@ This package also includes a `PathAndMethodChecker`, which also checks based on 
   "delete:/yet/another/path": {
     "minutely": 123,
     "hourly": 456,
+    "daily": 789,
+  },
+  // regexes are also supported with `r#` prefix
+  "r#get:^/some/regex/[^/]+/?$": {
+    "minutely": 123,
     "daily": 789,
   }
 }

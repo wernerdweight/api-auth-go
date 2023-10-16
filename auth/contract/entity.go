@@ -76,6 +76,29 @@ func (s AccessScope) GetAccessibility(key string) constants.ScopeAccessibility {
 
 type FUPScope map[string]any
 
+func (s FUPScope) getIntLimit(index int, pathSegments []string, typedValue int) *int {
+	if index == len(pathSegments)-1 {
+		return &typedValue
+	}
+	return nil
+}
+
+func (s FUPScope) getFloat64Limit(index int, pathSegments []string, typedValue float64) *int {
+	if index == len(pathSegments)-1 {
+		intValue := int(typedValue)
+		return &intValue
+	}
+	return nil
+}
+
+func (s FUPScope) getFloat32Limit(index int, pathSegments []string, typedValue float32) *int {
+	if index == len(pathSegments)-1 {
+		intValue := int(typedValue)
+		return &intValue
+	}
+	return nil
+}
+
 func (s FUPScope) GetLimit(key string) *int {
 	currentScope := s
 	pathSegments := strings.Split(key, ".")
@@ -88,24 +111,38 @@ func (s FUPScope) GetLimit(key string) *int {
 				continue
 			}
 			if typedValue, ok := value.(int); ok {
-				if index == len(pathSegments)-1 {
-					return &typedValue
-				}
-				return nil
+				return s.getIntLimit(index, pathSegments, typedValue)
 			}
 			if typedValue, ok := value.(float64); ok {
-				if index == len(pathSegments)-1 {
-					intValue := int(typedValue)
-					return &intValue
-				}
-				return nil
+				return s.getFloat64Limit(index, pathSegments, typedValue)
 			}
 			if typedValue, ok := value.(float32); ok {
-				if index == len(pathSegments)-1 {
-					intValue := int(typedValue)
-					return &intValue
+				return s.getFloat32Limit(index, pathSegments, typedValue)
+			}
+		}
+		for scopeEntry, value := range currentScope {
+			// regex-enabled scope keys must start with `r#`
+			if strings.Index(scopeEntry, "r#") != 0 {
+				continue
+			}
+			scopeEntryRegex, err := regexp.Compile(scopeEntry[2:])
+			if nil == err {
+				if scopeEntryRegex.MatchString(segment) {
+					if typedValue, ok := value.(map[string]any); ok {
+						currentScope = typedValue
+						index++
+						continue
+					}
+					if typedValue, ok := value.(int); ok {
+						return s.getIntLimit(index, pathSegments, typedValue)
+					}
+					if typedValue, ok := value.(float64); ok {
+						return s.getFloat64Limit(index, pathSegments, typedValue)
+					}
+					if typedValue, ok := value.(float32); ok {
+						return s.getFloat32Limit(index, pathSegments, typedValue)
+					}
 				}
-				return nil
 			}
 		}
 	}
@@ -127,6 +164,26 @@ func (s FUPScope) HasLimit(key string) bool {
 				continue
 			}
 			return false
+		}
+		for scopeEntry, value := range currentScope {
+			// regex-enabled scope keys must start with `r#`
+			if strings.Index(scopeEntry, "r#") != 0 {
+				continue
+			}
+			scopeEntryRegex, err := regexp.Compile(scopeEntry[2:])
+			if nil == err {
+				if scopeEntryRegex.MatchString(segment) {
+					if typedValue, ok := value.(map[string]any); ok {
+						currentScope = typedValue
+						if index == len(pathSegments)-1 {
+							return true
+						}
+						index++
+						continue
+					}
+					return false
+				}
+			}
 		}
 	}
 	return false
