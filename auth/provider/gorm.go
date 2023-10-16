@@ -117,7 +117,19 @@ func (p GormApiUserProvider) ProvideByToken(token string) (contract.ApiUserInter
 	if apiUserToken.GetExpirationDate().Before(time.Now()) {
 		return nil, contract.NewAuthError(contract.UserTokenExpired, map[string]time.Time{"expiredAt": apiUserToken.GetExpirationDate()})
 	}
-	return apiUserToken.GetApiUser(), nil
+	if !apiUserToken.GetApiUser().IsActive() {
+		return nil, contract.NewAuthError(contract.UserNotActive, nil)
+	}
+	// ApiUser needs to be fetched separately to return user defined model (otherwise it would be GormApiUser)
+	apiUser := p.newApiUser()
+	result = conn.First(&apiUser, apiUserToken.GetApiUser().(*entity.GormApiUser).ID)
+	if nil != result.Error {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, contract.NewAuthError(contract.UserNotFound, nil)
+		}
+		return nil, contract.NewInternalError(contract.DatabaseError, map[string]string{"details": result.Error.Error()})
+	}
+	return apiUser, nil
 }
 
 func (p GormApiUserProvider) ProvideByConfirmationToken(token string) (contract.ApiUserInterface, *contract.AuthError) {
