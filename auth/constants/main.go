@@ -13,6 +13,7 @@ const (
 	ClientSecretHeader                              = "X-Client-Secret"
 	ApiUserTokenHeader                              = "X-Api-User-Token"
 	ApiKeyHeader                                    = "Authorization"
+	OneOffTokenHeader                               = "X-Token"
 	ClientFUPLimitsHeader                           = "X-Client-FUP-Limits"
 	UserFUPLimitsHeader                             = "X-User-FUP-Limits"
 	RetryAfterHeader                                = "Retry-After"

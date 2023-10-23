@@ -13,4 +13,7 @@ func Register(r *gin.Engine) {
 		r.POST("/resetting/request", resettingRequestHandler)
 		r.POST("/resetting/reset/:token", resettingResetHandler)
 	}
+	if config.ProviderInstance.IsOneOffTokenModeEnabled() {
+		r.GET("/token/generate", generateTokenHandler)
+	}
 }

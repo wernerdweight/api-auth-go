@@ -36,6 +36,8 @@ Full configuration structure (only client configuration is mandatory, default va
         // FUPChecker: the checker used to check FUP limits that implements FUPCheckerInterface (optional; if you omit FUP checker, FUP limits will not be checked)
         // NOTE: if you want to use FUP limits, you must also enable Cache (see below)
         FUPChecker FUPCheckerInterface
+        // ApiTokenExpirationInterval: token expiration in seconds - defaults to 3600 (1 hour)
+        OneOffTokenExpirationInterval *time.Duration
     }
     
     // User: api user configuration (optional; if you omit user configuration, you will not be able to use `on-behalf` access mode (see below))
@@ -65,6 +67,8 @@ Full configuration structure (only client configuration is mandatory, default va
         ApiKey *bool
         // ClientIdAndSecret: client id and secret authentication mode (optional; default true)
         ClientIdAndSecret *bool
+        // OneOffToken: one-off token authentication mode (optional; default false)
+        OneOffToken *bool
     }
 
     // TargetHandlers: list of handlers to target (optional; if you omit target handlers, all handlers will be targeted)
@@ -73,8 +77,8 @@ Full configuration structure (only client configuration is mandatory, default va
     // '/v1/.*'   		# all handlers starting with '/v1/'
     // '/v1/some/path'  # only '/v1/some/path' handler
 
-	// ExcludeHandlers: list of handlers to exclude (optional; if you omit exclude handlers, no handlers will be excluded)
-	ExcludeHandlers *[]string
+    // ExcludeHandlers: list of handlers to exclude (optional; if you omit exclude handlers, no handlers will be excluded)
+    ExcludeHandlers *[]string
     
     // ExcludeOptionsRequests: if true, requests using the OPTIONS method will be ignored (authentication will be skipped) - default false
     ExcludeOptionsRequests *bool
@@ -276,6 +280,53 @@ Authorization: your-api-key
 Host: your-api-host.com
 ```
 
+### One-off token authentication mode:
+
+You can enable one-off token authentication mode by setting `Mode.OneOffToken` to `true`.
+If set, the middleware will look for the one-off token in the `X-Token` header of the request.
+This mode can be used together with both modes above, but if the `X-Token` header is present, no other authentication will be attempted.
+At least one of the modes above must be enabled for this mode to work (otherwise, you won't be able to obtain a one-off token, since it can only be obtained by an authenticated api client - see below).
+
+By default, the one-off token is valid for 1 hour. You can change this by setting `Client.OneOffTokenExpirationInterval` to a different value.
+
+```go
+package main
+
+import "github.com/wernerdweight/api-auth-go/auth/contract"
+
+useApiKeyMode := true
+useOneOffTokenMode := true
+
+contract.Config{
+    Client: contract.ClientConfig{
+        Provider: provider.NewMemoryApiClientProvider(...),
+        OneOffTokenExpirationInterval: &time.Duration{time.Hour * 2},
+    },
+    Mode: &contract.ModeConfig{
+        ApiKey: &useApiKeyMode,
+        OneOffToken: &useOneOffTokenMode,
+    },
+}
+```
+
+To obtain a one-off token, send a POST request to `/token/generate` (the request needs to be authenticated using one of the modes above):
+
+```http request
+POST /token/generate HTTP/1.1
+Authorization: your-api-key
+Host: your-api-host.com
+```
+
+With a one-off token, you can then authenticate your request like this:
+
+```http request
+POST /some/path HTTP/1.1
+X-Token: your-one-off-token
+Host: your-api-host.com
+```
+
+The authenticate ApiClient will have the same scope (if scoped access model is enabled, see below) as when the token was generated.
+
 ### Using GORM as data provider:
 
 The implementation of GORM data provider is included in this package. You can use it by providing your own implementation of `ApiClient`, `ApiUser` and `ApiUserToken` types (see above), and then providing a function that returns a GORM connection (see below).
@@ -303,6 +354,8 @@ contract.Config{
 By default, all clients and users have access to all paths. You can enable scoped access model by setting `UseScopeAccessModel` to `true` in `Client` and/or `User` configuration (see below).
 
 If enabled, the authenticator will also (apart from api credentials) check the defined client/user scope using configured checker (if no checker is explicitly configured, the default `PathChecker` is used). This way, different ApiClients/Users can have different privileges.
+
+Please note that if you enable scoped access model, even the built-in routes (e.g. `/registration/request` or `/token/generate`) need to be explicitly allowed in the scope.
 
 ```go
 package main

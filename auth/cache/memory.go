@@ -63,6 +63,29 @@ func (d *MemoryCacheDriver) SetApiClientByApiKey(apiKey string, client contract.
 	return nil
 }
 
+func (d *MemoryCacheDriver) GetApiClientByOneOffToken(token string) (contract.ApiClientInterface, *contract.AuthError) {
+	if hit, ok := d.apiClientMemory[d.prefix+"-one_off-"+token]; ok {
+		if hit.ExpireAt.After(time.Now()) {
+			return hit.Value, nil
+		}
+		delete(d.apiClientMemory, d.prefix+token)
+	}
+	return nil, nil
+}
+
+func (d *MemoryCacheDriver) SetApiClientByOneOffToken(oneOffToken contract.OneOffToken, client contract.ApiClientInterface) *contract.AuthError {
+	d.apiClientMemory[d.prefix+"-one_off-"+oneOffToken.Value] = MemoryCacheEntry[contract.ApiClientInterface]{
+		Value:    client,
+		ExpireAt: oneOffToken.Expires,
+	}
+	return nil
+}
+
+func (d *MemoryCacheDriver) DeleteApiClientByOneOffToken(token string) *contract.AuthError {
+	delete(d.apiClientMemory, d.prefix+"-one_off-"+token)
+	return nil
+}
+
 func (d *MemoryCacheDriver) GetApiUserByToken(token string) (contract.ApiUserInterface, *contract.AuthError) {
 	if hit, ok := d.apiUserMemory[d.prefix+token]; ok {
 		if hit.ExpireAt.After(time.Now()) {

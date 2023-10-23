@@ -40,6 +40,8 @@ const (
 	MarshallingError
 	FUPCacheDisabled
 	RequestLimitDepleted
+	CacheDisabled
+	InvalidOneOffToken
 )
 
 var AuthErrorCodes = map[AuthErrorCode]string{
@@ -68,6 +70,8 @@ var AuthErrorCodes = map[AuthErrorCode]string{
 	MarshallingError:          "marshalling error",
 	FUPCacheDisabled:          "cache driver needs to be configured for the FUP checker to work",
 	RequestLimitDepleted:      "request limit depleted",
+	CacheDisabled:             "cache driver needs to be configured for this functionality to work",
+	InvalidOneOffToken:        "one-off token is invalid, already used or expired",
 }
 
 func NewAuthError(code AuthErrorCode, payload interface{}) *AuthError {

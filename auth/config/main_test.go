@@ -69,9 +69,11 @@ func (s *TestSuite) SetupTest() {
 	s.provider = &Provider{
 		config: contract.Config{
 			Client: contract.ClientConfig{
-				Provider:            nil,
-				UseScopeAccessModel: &defaultClientUseScopeAccessModel,
-				AccessScopeChecker:  checker.PathAccessScopeChecker{},
+				Provider:                      nil,
+				UseScopeAccessModel:           &defaultClientUseScopeAccessModel,
+				AccessScopeChecker:            checker.PathAccessScopeChecker{},
+				FUPChecker:                    nil,
+				OneOffTokenExpirationInterval: &defaultOneOffTokenExpirationInterval,
 			},
 			User: &contract.UserConfig{
 				Provider:                            nil,
@@ -85,6 +87,7 @@ func (s *TestSuite) SetupTest() {
 			Mode: &contract.ModesConfig{
 				ApiKey:            &defaultApiKeyMode,
 				ClientIdAndSecret: &defaultClientIdAndSecretMode,
+				OneOffToken:       &defaultOneOffTokenMode,
 			},
 			TargetHandlers:         nil,
 			ExcludeHandlers:        nil,
@@ -349,4 +352,26 @@ func (s *TestSuite) TestProvider_IsUserFUPEnabled() {
 		},
 	})
 	s.True(s.provider.IsUserFUPEnabled())
+}
+
+func (s *TestSuite) TestProvider_IsOneOffTokenModeEnabled() {
+	s.False(s.provider.IsOneOffTokenModeEnabled())
+	enabled := true
+	s.provider.Init(contract.Config{
+		Mode: &contract.ModesConfig{
+			OneOffToken: &enabled,
+		},
+	})
+	s.True(s.provider.IsOneOffTokenModeEnabled())
+}
+
+func (s *TestSuite) TestProvider_GetOneOffTokenExpirationInterval() {
+	s.Equal(defaultOneOffTokenExpirationInterval, s.provider.GetOneOffTokenExpirationInterval())
+	interval := time.Hour * 2
+	s.provider.Init(contract.Config{
+		Client: contract.ClientConfig{
+			OneOffTokenExpirationInterval: &interval,
+		},
+	})
+	s.Equal(interval, s.provider.GetOneOffTokenExpirationInterval())
 }

@@ -189,6 +189,11 @@ func (s FUPScope) HasLimit(key string) bool {
 	return false
 }
 
+type OneOffToken struct {
+	Value   string    `json:"token"`
+	Expires time.Time `json:"expires"`
+}
+
 type ApiClientInterface interface {
 	GetClientId() string
 	GetClientSecret() string

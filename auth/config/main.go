@@ -102,6 +102,14 @@ func (p *Provider) IsUserFUPEnabled() bool {
 	return nil != p.config.User.FUPChecker
 }
 
+func (p *Provider) IsOneOffTokenModeEnabled() bool {
+	return *p.config.Mode.OneOffToken
+}
+
+func (p *Provider) GetOneOffTokenExpirationInterval() time.Duration {
+	return *p.config.Client.OneOffTokenExpirationInterval
+}
+
 func (p *Provider) initUser(config contract.Config) {
 	if nil != config.User.Provider {
 		p.config.User.Provider = config.User.Provider
@@ -136,6 +144,9 @@ func (p *Provider) initMode(config contract.Config) {
 	if nil != config.Mode.ClientIdAndSecret {
 		p.config.Mode.ClientIdAndSecret = config.Mode.ClientIdAndSecret
 	}
+	if nil != config.Mode.OneOffToken {
+		p.config.Mode.OneOffToken = config.Mode.OneOffToken
+	}
 }
 
 func (p *Provider) initCache(config contract.Config) {
@@ -162,6 +173,9 @@ func (p *Provider) Init(config contract.Config) {
 	}
 	if nil != config.Client.FUPChecker {
 		p.config.Client.FUPChecker = config.Client.FUPChecker
+	}
+	if nil != config.Client.OneOffTokenExpirationInterval {
+		p.config.Client.OneOffTokenExpirationInterval = config.Client.OneOffTokenExpirationInterval
 	}
 
 	if nil != config.User {
@@ -191,6 +205,7 @@ func (p *Provider) Init(config contract.Config) {
 
 var (
 	defaultApiKeyMode                     = false
+	defaultOneOffTokenMode                = false
 	defaultClientIdAndSecretMode          = true
 	defaultExcludeOptionsRequests         = false
 	defaultClientUseScopeAccessModel      = false
@@ -198,6 +213,7 @@ var (
 	defaultWithRegistration               = false
 	defaultExpirationInterval             = time.Hour * 24 * 30
 	defaultConfirmationExpirationInterval = time.Hour * 12
+	defaultOneOffTokenExpirationInterval  = time.Hour
 	defaultCacheTTL                       = time.Hour
 	defaultCachePrefix                    = "api-auth-go:"
 )
@@ -205,10 +221,11 @@ var (
 var ProviderInstance = &Provider{
 	config: contract.Config{
 		Client: contract.ClientConfig{
-			Provider:            nil,
-			UseScopeAccessModel: &defaultClientUseScopeAccessModel,
-			AccessScopeChecker:  checker.PathAccessScopeChecker{},
-			FUPChecker:          nil,
+			Provider:                      nil,
+			UseScopeAccessModel:           &defaultClientUseScopeAccessModel,
+			AccessScopeChecker:            checker.PathAccessScopeChecker{},
+			FUPChecker:                    nil,
+			OneOffTokenExpirationInterval: &defaultOneOffTokenExpirationInterval,
 		},
 		User: &contract.UserConfig{
 			Provider:                            nil,
@@ -223,6 +240,7 @@ var ProviderInstance = &Provider{
 		Mode: &contract.ModesConfig{
 			ApiKey:            &defaultApiKeyMode,
 			ClientIdAndSecret: &defaultClientIdAndSecretMode,
+			OneOffToken:       &defaultOneOffTokenMode,
 		},
 		TargetHandlers:         nil,
 		ExcludeHandlers:        nil,

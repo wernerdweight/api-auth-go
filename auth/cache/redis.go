@@ -108,6 +108,41 @@ func (d *RedisCacheDriver) SetApiClientByApiKey(apiKey string, client contract.A
 	return nil
 }
 
+func (d *RedisCacheDriver) GetApiClientByOneOffToken(token string) (contract.ApiClientInterface, *contract.AuthError) {
+	value, err := d.getClient().Get(context.Background(), d.prefix+"-one_off-"+token).Result()
+	if nil != err {
+		if redis.Nil == err {
+			return nil, nil
+		}
+		return nil, contract.NewInternalError(contract.CacheError, map[string]string{"details": err.Error()})
+	}
+	return d.unmarshalClient(value)
+}
+
+func (d *RedisCacheDriver) SetApiClientByOneOffToken(oneOffToken contract.OneOffToken, client contract.ApiClientInterface) *contract.AuthError {
+	marshalled, authErr := marshaller.MarshalInternal(client)
+	if nil != authErr {
+		return authErr
+	}
+	value, err := json.Marshal(marshalled)
+	if nil != err {
+		return contract.NewInternalError(contract.CacheError, map[string]string{"details": err.Error()})
+	}
+	err = d.getClient().Set(context.Background(), d.prefix+"-one_off-"+oneOffToken.Value, value, oneOffToken.Expires.Sub(time.Now())).Err()
+	if nil != err {
+		return contract.NewInternalError(contract.CacheError, map[string]string{"details": err.Error()})
+	}
+	return nil
+}
+
+func (d *RedisCacheDriver) DeleteApiClientByOneOffToken(token string) *contract.AuthError {
+	err := d.getClient().Del(context.Background(), d.prefix+"-one_off-"+token).Err()
+	if nil != err {
+		return contract.NewInternalError(contract.CacheError, map[string]string{"details": err.Error()})
+	}
+	return nil
+}
+
 func (d *RedisCacheDriver) GetApiUserByToken(token string) (contract.ApiUserInterface, *contract.AuthError) {
 	value, err := d.getClient().Get(context.Background(), d.prefix+token).Result()
 	if nil != err {

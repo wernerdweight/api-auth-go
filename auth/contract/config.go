@@ -12,6 +12,8 @@ type ClientConfig struct {
 	// FUPChecker: the checker used to check FUP limits that implements FUPCheckerInterface (optional; if you omit FUP checker, FUP limits will not be checked)
 	// NOTE: if you want to use FUP limits, you must also enable Cache (see below)
 	FUPChecker FUPCheckerInterface
+	// ApiTokenExpirationInterval: token expiration in seconds - defaults to 3600 (1 hour)
+	OneOffTokenExpirationInterval *time.Duration
 }
 
 type UserConfig struct {
@@ -39,6 +41,8 @@ type ModesConfig struct {
 	ApiKey *bool
 	// ClientIdAndSecret: client id and secret authentication mode (optional; default true)
 	ClientIdAndSecret *bool
+	// OneOffToken: one-off token authentication mode (optional; default false)
+	OneOffToken *bool
 }
 
 type CacheConfig struct {

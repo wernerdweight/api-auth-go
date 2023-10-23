@@ -39,7 +39,11 @@ func shouldAuthenticate(c *gin.Context) bool {
 	return false
 }
 
-func shouldAuthenticateByApiClientAndUser(c *gin.Context) bool {
+func shouldAuthenticateByOneOffToken(c *gin.Context) bool {
+	return config.ProviderInstance.IsOneOffTokenModeEnabled() && c.Request.Header.Get(constants.OneOffTokenHeader) != ""
+}
+
+func shouldAuthenticateByApiClientAndSecret(c *gin.Context) bool {
 	return c.Request.Header.Get(constants.ClientIdHeader) != "" && c.Request.Header.Get(constants.ClientSecretHeader) != ""
 }
 
@@ -47,55 +51,89 @@ func shouldAuthenticateByApiKey(c *gin.Context) bool {
 	return c.Request.Header.Get(constants.ApiKeyHeader) != ""
 }
 
+func authenticateApiClientByOneOffToken(c *gin.Context) (contract.ApiClientInterface, *contract.AuthError) {
+	token := c.Request.Header.Get(constants.OneOffTokenHeader)
+	if !config.ProviderInstance.IsCacheEnabled() {
+		return nil, contract.NewInternalError(contract.CacheDisabled, nil)
+	}
+	cacheDriver := config.ProviderInstance.GetCacheDriver()
+	apiClient, err := cacheDriver.GetApiClientByOneOffToken(token)
+	if nil != err {
+		return nil, err
+	}
+	if nil == apiClient {
+		return nil, contract.NewAuthError(contract.InvalidOneOffToken, nil)
+	}
+	err = cacheDriver.DeleteApiClientByOneOffToken(token)
+	if nil != err {
+		log.Printf("can't delete api client by one-off token: %v", err)
+	}
+	return apiClient, nil
+}
+
+func authenticateApiClientByApiClientAndSecret(c *gin.Context, apiClientProvider contract.ApiClientProviderInterface[contract.ApiClientInterface]) (contract.ApiClientInterface, *contract.AuthError) {
+	clientId := c.Request.Header.Get(constants.ClientIdHeader)
+	clientSecret := c.Request.Header.Get(constants.ClientSecretHeader)
+	if config.ProviderInstance.IsCacheEnabled() {
+		apiClient, err := config.ProviderInstance.GetCacheDriver().GetApiClientByIdAndSecret(clientId, clientSecret)
+		if nil != apiClient {
+			return apiClient, nil
+		}
+		if nil != err {
+			log.Printf("can't get api client from cache: %v", err)
+		}
+	}
+	apiClient, err := apiClientProvider.ProvideByIdAndSecret(clientId, clientSecret)
+	if nil != err {
+		return nil, err
+	}
+	if config.ProviderInstance.IsCacheEnabled() {
+		err = config.ProviderInstance.GetCacheDriver().SetApiClientByIdAndSecret(clientId, clientSecret, apiClient)
+		if nil != err {
+			log.Printf("can't set api client to cache: %v", err)
+		}
+	}
+	return apiClient, nil
+}
+
+func authenticateApiClientByApiKey(c *gin.Context, apiClientProvider contract.ApiClientProviderInterface[contract.ApiClientInterface]) (contract.ApiClientInterface, *contract.AuthError) {
+	apiKey := c.Request.Header.Get(constants.ApiKeyHeader)
+	if config.ProviderInstance.IsCacheEnabled() {
+		apiClient, err := config.ProviderInstance.GetCacheDriver().GetApiClientByApiKey(apiKey)
+		if nil != apiClient {
+			return apiClient, nil
+		}
+		if nil != err {
+			log.Printf("can't get api client from cache: %v", err)
+		}
+	}
+	apiClient, err := apiClientProvider.ProvideByApiKey(apiKey)
+	if nil != err {
+		return nil, err
+	}
+	if config.ProviderInstance.IsCacheEnabled() {
+		err = config.ProviderInstance.GetCacheDriver().SetApiClientByApiKey(apiKey, apiClient)
+		if nil != err {
+			log.Printf("can't set api client to cache: %v", err)
+		}
+	}
+	return apiClient, nil
+}
+
 func authenticateApiClient(c *gin.Context) (contract.ApiClientInterface, *contract.AuthError) {
+	if shouldAuthenticateByOneOffToken(c) {
+		return authenticateApiClientByOneOffToken(c)
+	}
+
 	apiClientProvider := config.ProviderInstance.GetClientProvider()
-	if shouldAuthenticateByApiClientAndUser(c) {
-		clientId := c.Request.Header.Get(constants.ClientIdHeader)
-		clientSecret := c.Request.Header.Get(constants.ClientSecretHeader)
-		if config.ProviderInstance.IsCacheEnabled() {
-			apiClient, err := config.ProviderInstance.GetCacheDriver().GetApiClientByIdAndSecret(clientId, clientSecret)
-			if nil != apiClient {
-				return apiClient, nil
-			}
-			if nil != err {
-				log.Printf("can't get api client from cache: %v", err)
-			}
-		}
-		apiClient, err := apiClientProvider.ProvideByIdAndSecret(clientId, clientSecret)
-		if nil != err {
-			return nil, err
-		}
-		if config.ProviderInstance.IsCacheEnabled() {
-			err = config.ProviderInstance.GetCacheDriver().SetApiClientByIdAndSecret(clientId, clientSecret, apiClient)
-			if nil != err {
-				log.Printf("can't set api client to cache: %v", err)
-			}
-		}
-		return apiClient, nil
+	if shouldAuthenticateByApiClientAndSecret(c) {
+		return authenticateApiClientByApiClientAndSecret(c, apiClientProvider)
 	}
+
 	if shouldAuthenticateByApiKey(c) {
-		apiKey := c.Request.Header.Get(constants.ApiKeyHeader)
-		if config.ProviderInstance.IsCacheEnabled() {
-			apiClient, err := config.ProviderInstance.GetCacheDriver().GetApiClientByApiKey(apiKey)
-			if nil != apiClient {
-				return apiClient, nil
-			}
-			if nil != err {
-				log.Printf("can't get api client from cache: %v", err)
-			}
-		}
-		apiClient, err := apiClientProvider.ProvideByApiKey(apiKey)
-		if nil != err {
-			return nil, err
-		}
-		if config.ProviderInstance.IsCacheEnabled() {
-			err = config.ProviderInstance.GetCacheDriver().SetApiClientByApiKey(apiKey, apiClient)
-			if nil != err {
-				log.Printf("can't set api client to cache: %v", err)
-			}
-		}
-		return apiClient, nil
+		return authenticateApiClientByApiKey(c, apiClientProvider)
 	}
+
 	return nil, contract.NewAuthError(contract.NoCredentialsProvided, nil)
 }
 
