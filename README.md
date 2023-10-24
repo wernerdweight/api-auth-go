@@ -578,7 +578,8 @@ During this interval, you can not request another password reset for the same us
 
 ### With FUP limits:
 
-By default, FUP limits are disabled. If you want to enable FUP limits, you can configure one of the built-in FUP checkers (Path, PathAndMethod), or you can provide your own implementation of `FUPCheckerInterface` (see below). You then need to enable it in `Client` and/or `User` configuration (see below).
+By default, FUP limits are disabled. If you want to enable FUP limits, you can configure one of the built-in FUP checkers (Path, PathAndMethod, IP, Cookie), or you can provide your own implementation of `FUPCheckerInterface` (see below). You then need to enable it in `Client` and/or `User` configuration (see below).
+
 Please note that for this functionality to work, you also need to enable cache (see above).
 
 ```go
@@ -593,11 +594,11 @@ contract.Config{
             {Id: "another-id", Secret: "another-secret", ApiKey: "another-api-key"},
             ...
         }),
-        // only use one of the following, or implement your own checker
+        // only use one of the following, implement your own checker, or use the ChainFUPChecker (see below)
         FUPChecker: fup.PathFUPChecker{},
         FUPChecker: fup.PathAndMethodFUPChecker{},
     },
-	// note: user config is still optional, included here for completeness
+    // note: user config is still optional, included here for completeness
     User: &contract.UserConfig{
         Provider: provider.NewMemoryApiUserProvider([]entity.MemoryApiUser{
             {Id: "user-id", Login: "user@domain.tld", Password: "not-so-secret", CurrentToken: &entity.MemoryApiUserToken{Token: "secret-user-token", ExpirationDate: time.Time{}}},
@@ -615,6 +616,29 @@ contract.Config{
     },
 }
 ```
+
+You can use multiple FUP checkers at the same time via `ChainFUPChecker`:
+
+```go
+package main
+
+import "github.com/wernerdweight/api-auth-go/auth/contract"
+
+contract.Config{
+    Client: contract.ClientConfig{
+        ...
+        FUPChecker: fup.ChainFUPChecker{
+            Checkers: []contract.FUPCheckerInterface{
+                fup.PathAndMethodFUPChecker{},
+                fup.IPFUPChecker{},
+                fup.CookieFUPChecker{},
+            },
+        },
+    },
+    ...
+}
+```
+
 
 The scope is generally another JSON column on ApiClient/ApiUser entities. You can store any information in that column and then use any checker you want to read and evaluate the stored information.
 
@@ -669,6 +693,34 @@ This package also includes a `PathAndMethodChecker`, which also checks based on 
   "r#get:^/some/regex/[^/]+/?$": {
     "minutely": 123,
     "daily": 789,
+  }
+}
+```
+
+The IPChecker expects a structure like this:
+
+```json5
+{
+  "per-ip": {
+    "minutely": 123,
+    "hourly": 456,
+    "daily": 789,
+    "weekly": 101112,
+    "monthly": 131415,
+  }
+}
+```
+
+The CookieChecker expects a structure like this:
+
+```json5
+{
+  "per-cookie": {
+    "minutely": 123,
+    "hourly": 456,
+    "daily": 789,
+    "weekly": 101112,
+    "monthly": 131415,
   }
 }
 ```

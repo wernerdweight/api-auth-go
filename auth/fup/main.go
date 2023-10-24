@@ -8,9 +8,9 @@ import (
 	"strings"
 )
 
-func checkLimits(scope *contract.FUPScope, key string, path string, cacheDriver contract.CacheDriverInterface) (map[constants.Period]contract.FUPLimits, *contract.FUPScopeLimits) {
+func checkLimits(scope *contract.FUPScope, key string, cacheId string, path string, cacheDriver contract.CacheDriverInterface) (map[constants.Period]contract.FUPLimits, *contract.FUPScopeLimits) {
 	limits := make(map[constants.Period]contract.FUPLimits)
-	cacheKey := fmt.Sprintf("fup_%s_%s", key, strings.Replace(path, "/", "-", -1))
+	cacheKey := fmt.Sprintf("fup_%s_%s", key, strings.Replace(cacheId, "/", "-", -1))
 	cacheEntry, err := cacheDriver.GetFUPEntry(cacheKey)
 	if nil != err {
 		return nil, &contract.FUPScopeLimits{
@@ -89,7 +89,7 @@ func check(path string, scope *contract.FUPScope, key string) contract.FUPScopeL
 
 	var limits map[constants.Period]contract.FUPLimits
 	if hasRootLimit {
-		rootLimits, scopeLimits := checkLimits(scope, key, "*", cacheDriver)
+		rootLimits, scopeLimits := checkLimits(scope, key, "*", "*", cacheDriver)
 		if nil != scopeLimits {
 			return *scopeLimits
 		}
@@ -97,7 +97,7 @@ func check(path string, scope *contract.FUPScope, key string) contract.FUPScopeL
 	}
 
 	if hasPathLimit {
-		pathLimits, scopeLimits := checkLimits(scope, key, path, cacheDriver)
+		pathLimits, scopeLimits := checkLimits(scope, key, path, path, cacheDriver)
 		if nil != scopeLimits {
 			return *scopeLimits
 		}

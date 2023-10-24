@@ -27,6 +27,8 @@ const (
 	PeriodDaily                  Period             = "daily"
 	PeriodWeekly                 Period             = "weekly"
 	PeriodMonthly                Period             = "monthly"
+	FUPIPKey                                        = "per-ip"
+	FUPCookieKey                                    = "per-cookie"
 
 	ApiClient = "api-client"
 	ApiUser   = "api-user"
