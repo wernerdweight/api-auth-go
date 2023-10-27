@@ -20,7 +20,6 @@ func (ch CookieFUPChecker) Check(scope *contract.FUPScope, c *gin.Context, key s
 		name = ch.CookieName
 	}
 	cookie, err := c.Cookie(name)
-	log.Printf("cookie: %s", cookie)
 	if nil != err && http.ErrNoCookie != err {
 		return contract.FUPScopeLimits{
 			Accessible: constants.ScopeAccessibilityForbidden,
