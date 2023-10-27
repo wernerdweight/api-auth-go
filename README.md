@@ -597,6 +597,11 @@ contract.Config{
         // only use one of the following, implement your own checker, or use the ChainFUPChecker (see below)
         FUPChecker: fup.PathFUPChecker{},
         FUPChecker: fup.PathAndMethodFUPChecker{},
+        FUPChecker: fup.IPFUPChecker{},
+        FUPChecker: fup.CookieFUPChecker{
+            // CookieName: name of the cookie to use for FUP limits - defaults to `api-auth-go-fup`
+            CookieName: "your-cookie-name",
+        },
     },
     // note: user config is still optional, included here for completeness
     User: &contract.UserConfig{
@@ -608,6 +613,11 @@ contract.Config{
         },
         FUPChecker: fup.PathFUPChecker{},
         FUPChecker: fup.PathAndMethodFUPChecker{},
+        FUPChecker: fup.IPFUPChecker{},
+        FUPChecker: fup.CookieFUPChecker{
+            // CookieName: name of the cookie to use for FUP limits - defaults to `api-auth-go-fup`
+            CookieName: "your-cookie-name",
+        },
     },
     Cache: &contract.CacheConfig{
         // only use one of the following, or implement your own driver

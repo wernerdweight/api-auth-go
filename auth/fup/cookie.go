@@ -11,11 +11,15 @@ import (
 
 // CookieFUPChecker is an implementation of the FUPCheckerInterface for the URL path-based access model
 type CookieFUPChecker struct {
+	CookieName string
 }
 
 func (ch CookieFUPChecker) Check(scope *contract.FUPScope, c *gin.Context, key string) contract.FUPScopeLimits {
-	// TODO: make cookie name configurable
-	cookie, err := c.Cookie("api-auth-go-fup")
+	name := "api-auth-go-fup"
+	if "" != ch.CookieName {
+		name = ch.CookieName
+	}
+	cookie, err := c.Cookie(name)
 	log.Printf("cookie: %s", cookie)
 	if nil != err && http.ErrNoCookie != err {
 		return contract.FUPScopeLimits{
