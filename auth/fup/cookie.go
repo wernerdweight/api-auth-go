@@ -5,7 +5,6 @@ import (
 	"github.com/wernerdweight/api-auth-go/auth/config"
 	"github.com/wernerdweight/api-auth-go/auth/constants"
 	"github.com/wernerdweight/api-auth-go/auth/contract"
-	"log"
 	"net/http"
 )
 
