@@ -91,25 +91,25 @@ func TestAccessScope_GetAccessibility(t *testing.T) {
 		{
 			name:  "Nested scope, true",
 			scope: AccessScope{"test": AccessScope{"nested1": true, "nested2": false, "nested3": "on-behalf"}},
-			args:  args{path: "test.nested1"},
+			args:  args{path: "test|nested1"},
 			want:  constants.ScopeAccessibilityAccessible,
 		},
 		{
 			name:  "Nested scope, false",
 			scope: AccessScope{"test": AccessScope{"nested1": true, "nested2": false, "nested3": "on-behalf"}},
-			args:  args{path: "test.nested2"},
+			args:  args{path: "test|nested2"},
 			want:  constants.ScopeAccessibilityForbidden,
 		},
 		{
 			name:  "Nested scope, on-behalf",
 			scope: AccessScope{"test": AccessScope{"nested1": true, "nested2": false, "nested3": "on-behalf"}},
-			args:  args{path: "test.nested3"},
+			args:  args{path: "test|nested3"},
 			want:  constants.ScopeAccessibilityOnBehalf,
 		},
 		{
 			name:  "Nested scope, not in scope",
 			scope: AccessScope{"test": AccessScope{"nested1": true, "nested2": false, "nested3": "on-behalf"}},
-			args:  args{path: "test.nested4"},
+			args:  args{path: "test|nested4"},
 			want:  constants.ScopeAccessibilityForbidden,
 		},
 		{
@@ -127,7 +127,7 @@ func TestAccessScope_GetAccessibility(t *testing.T) {
 		{
 			name:  "Nested scope, too deep",
 			scope: AccessScope{"test": AccessScope{"nested1": true, "nested2": false, "nested3": "on-behalf"}},
-			args:  args{path: "test.test.test.nope"},
+			args:  args{path: "test|test|test|nope"},
 			want:  constants.ScopeAccessibilityForbidden,
 		},
 		{
@@ -155,15 +155,21 @@ func TestAccessScope_GetAccessibility(t *testing.T) {
 			want:  constants.ScopeAccessibilityForbidden,
 		},
 		{
+			name:  "Path in scope, multiple keys, with regex, with unsafe chars",
+			scope: AccessScope{"/test": true, "r#^/test/.*?$": "on-behalf"},
+			args:  args{path: "/test/abC-1De23f/Test_2023-01-02T12:13:14.567Z"},
+			want:  constants.ScopeAccessibilityOnBehalf,
+		},
+		{
 			name:  "Nested scope, on-behalf, multiple keys, with regex",
 			scope: AccessScope{"/test": true, "nested1": AccessScope{"r#^/test/[^/]+$": AccessScope{"nested2": "on-behalf"}}},
-			args:  args{path: "nested1./test/abC-1De23f.nested2"},
+			args:  args{path: "nested1|/test/abC-1De23f|nested2"},
 			want:  constants.ScopeAccessibilityOnBehalf,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.scope.GetAccessibility(tt.args.path); got != tt.want {
+			if got := tt.scope.GetAccessibility(tt.args.path, ""); got != tt.want {
 				t.Errorf("AccessScope.GetAccessibility() = %v, want %v", got, tt.want)
 			}
 		})

@@ -9,6 +9,7 @@ import (
 
 // PathAccessScopeChecker is an implementation of the AccessScopeCheckerInterface for the URL path-based access model
 type PathAccessScopeChecker struct {
+	hierarchySeparator string
 }
 
 func (ch PathAccessScopeChecker) Check(scope *contract.AccessScope, c *gin.Context) constants.ScopeAccessibility {
@@ -16,5 +17,5 @@ func (ch PathAccessScopeChecker) Check(scope *contract.AccessScope, c *gin.Conte
 		return constants.ScopeAccessibilityForbidden
 	}
 	path := strings.ToLower(c.Request.URL.Path)
-	return scope.GetAccessibility(path)
+	return scope.GetAccessibility(path, ch.hierarchySeparator)
 }

@@ -30,9 +30,12 @@ func (s AccessScope) getBoolAccessibility(index int, pathSegments []string, type
 	return constants.ScopeAccessibilityForbidden
 }
 
-func (s AccessScope) GetAccessibility(key string) constants.ScopeAccessibility {
+func (s AccessScope) GetAccessibility(key string, hierarchySeparator string) constants.ScopeAccessibility {
 	currentScope := s
-	pathSegments := strings.Split(key, ".")
+	if hierarchySeparator == "" {
+		hierarchySeparator = "|"
+	}
+	pathSegments := strings.Split(key, hierarchySeparator)
 	index := 0
 	for _, segment := range pathSegments {
 		if value, ok := currentScope[segment]; ok {
