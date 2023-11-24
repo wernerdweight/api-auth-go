@@ -22,6 +22,7 @@ const (
 	ScopeAccessibilityOnBehalf   ScopeAccessibility = "on-behalf"
 	ScopeAccessibilityUnlimited  ScopeAccessibility = "unlimited"
 	DefaultTokenLength                              = 32
+	OneOffTokenLength                               = 64
 	PeriodMinutely               Period             = "minutely"
 	PeriodHourly                 Period             = "hourly"
 	PeriodDaily                  Period             = "daily"
