@@ -39,5 +39,11 @@ func generateTokenHandler(c *gin.Context) {
 
 	cacheDriver.SetApiClientByOneOffToken(token, apiClient.(contract.ApiClientInterface))
 
-	c.JSON(http.StatusOK, token)
+	// do not return milliseconds in response
+	rfc3339Output := map[string]string{
+		"token": token.Value,
+		"expires": token.Expires.Format(time.RFC3339),
+	}
+
+	c.JSON(http.StatusOK, rfc3339Output)
 }
