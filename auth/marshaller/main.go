@@ -5,7 +5,7 @@ import (
 	"github.com/wernerdweight/api-auth-go/auth/contract"
 )
 
-func marshal(v interface{}, groups []string) (interface{}, *contract.AuthError) {
+func Marshal(v interface{}, groups []string) (interface{}, *contract.AuthError) {
 	o := &sheriff.Options{
 		Groups:          groups,
 		IncludeEmptyTag: true,
@@ -18,9 +18,9 @@ func marshal(v interface{}, groups []string) (interface{}, *contract.AuthError) 
 }
 
 func MarshalPublic(v interface{}) (interface{}, *contract.AuthError) {
-	return marshal(v, []string{"public"})
+	return Marshal(v, []string{"public"})
 }
 
 func MarshalInternal(v interface{}) (interface{}, *contract.AuthError) {
-	return marshal(v, []string{"internal"})
+	return Marshal(v, []string{"internal"})
 }

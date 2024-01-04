@@ -8,10 +8,10 @@ import (
 
 // GormApiClient is a struct that implements ApiClientInterface for GORM
 type GormApiClient struct {
-	ID           uuid.UUID             `gorm:"primaryKey;type:uuid;default:uuid_generate_v4()" json:"id" groups:"internal,public"`
-	ClientId     string                `json:"clientId" groups:"internal"`
-	ClientSecret string                `json:"clientSecret" groups:"internal"`
-	ApiKey       string                `json:"apiKey" groups:"internal"`
+	ID           uuid.UUID             `gorm:"primaryKey;type:uuid;default:uuid_generate_v4()" json:"id" groups:"internal,public,id"`
+	ClientId     string                `json:"clientId" groups:"internal,credentials"`
+	ClientSecret string                `json:"clientSecret" groups:"internal,credentials"`
+	ApiKey       string                `json:"apiKey" groups:"internal,credentials"`
 	AccessScope  *contract.AccessScope `gorm:"type:jsonb;serializer:json" json:"clientScope" groups:"internal,public"`
 	FUPScope     *contract.FUPScope    `gorm:"type:jsonb;serializer:json" json:"fupConfig" groups:"internal"`
 	CreatedAt    time.Time             `gorm:"not null;default:CURRENT_TIMESTAMP" json:"createdAt" groups:"internal"`
@@ -43,13 +43,13 @@ func (c *GormApiClient) GetFUPScope() *contract.FUPScope {
 
 // GormApiUser is a struct that implements ApiUserInterface for GORM
 type GormApiUser struct {
-	ID                      uuid.UUID                      `gorm:"primaryKey;type:uuid;default:uuid_generate_v4()" json:"id" groups:"internal,public"`
-	Login                   string                         `gorm:"column:email" json:"login" groups:"internal"`
+	ID                      uuid.UUID                      `gorm:"primaryKey;type:uuid;default:uuid_generate_v4()" json:"id" groups:"internal,public,id"`
+	Login                   string                         `gorm:"column:email" json:"login" groups:"internal,credentials"`
 	Password                string                         `json:"password" groups:"internal"`
 	AccessScope             *contract.AccessScope          `gorm:"type:jsonb;serializer:json" json:"userScope" groups:"internal,public"`
 	FUPScope                *contract.FUPScope             `gorm:"type:jsonb;serializer:json" json:"fupConfig" groups:"internal"`
 	LastLoginAt             *time.Time                     `json:"lastLoginAt" groups:"internal,public"`
-	CurrentToken            contract.ApiUserTokenInterface `gorm:"-" json:"token" groups:"internal,public"`
+	CurrentToken            contract.ApiUserTokenInterface `gorm:"-" json:"token" groups:"internal,public,credentials"`
 	ApiTokens               []GormApiUserToken             `gorm:"foreignKey:ApiUserID" json:"-"`
 	CreatedAt               time.Time                      `gorm:"not null;default:CURRENT_TIMESTAMP" json:"createdAt" groups:"internal"`
 	Active                  bool                           `gorm:"not null;default:false" json:"active" groups:"internal"`
