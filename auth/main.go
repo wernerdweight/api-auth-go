@@ -6,6 +6,7 @@ import (
 	"github.com/wernerdweight/api-auth-go/auth/contract"
 	"github.com/wernerdweight/api-auth-go/auth/routes"
 	"github.com/wernerdweight/api-auth-go/auth/security"
+	"github.com/wernerdweight/events-go"
 	"log"
 	"net/http"
 )
@@ -41,10 +42,16 @@ func Middleware(r *gin.Engine, c contract.Config) gin.HandlerFunc {
 
 		err := security.Authenticate(c)
 		if nil != err {
-			c.AbortWithStatusJSON(err.Status, gin.H{
+			errorResponse := gin.H{
 				"code":    err.Code,
 				"error":   err.Err.Error(),
 				"payload": err.Payload,
+			}
+			c.AbortWithStatusJSON(err.Status, errorResponse)
+			events.GetEventHub().DispatchAsync(&contract.AuthenticationFailedEvent{
+				Error:    *err,
+				Context:  c,
+				Response: errorResponse,
 			})
 			return
 		}

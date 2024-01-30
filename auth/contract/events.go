@@ -1,6 +1,7 @@
 package contract
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/wernerdweight/events-go"
 )
 
@@ -14,6 +15,7 @@ const (
 	ResetApiUserPasswordEventKey              = "api-auth-go.reset-api-user-password"
 	ResettingRequestCompletedEventKey         = "api-auth-go.resetting-request-completed"
 	ResettingCompletedEventKey                = "api-auth-go.resetting-completed"
+	AuthenticationFailedEventKey              = "api-auth-go.authentication-failed"
 )
 
 type ValidateLoginInformationEvent struct {
@@ -124,5 +126,19 @@ func (event *ResettingCompletedEvent) GetKey() events.EventKey {
 }
 
 func (event *ResettingCompletedEvent) GetPayload() events.EventPayload {
+	return event
+}
+
+type AuthenticationFailedEvent struct {
+	Error    AuthError
+	Context  *gin.Context
+	Response gin.H
+}
+
+func (event *AuthenticationFailedEvent) GetKey() events.EventKey {
+	return AuthenticationFailedEventKey
+}
+
+func (event *AuthenticationFailedEvent) GetPayload() events.EventPayload {
 	return event
 }
