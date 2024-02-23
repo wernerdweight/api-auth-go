@@ -27,18 +27,24 @@ func (d *MemoryCacheDriver) Init(prefix string, ttl time.Duration) *contract.Aut
 	return nil
 }
 
+func (d *MemoryCacheDriver) getPrefix(groupPrefix GroupType) string {
+	return getPrefix(d.prefix, groupPrefix)
+}
+
 func (d *MemoryCacheDriver) GetApiClientByIdAndSecret(id string, secret string) (contract.ApiClientInterface, *contract.AuthError) {
-	if hit, ok := d.apiClientMemory[d.prefix+id+secret]; ok {
+	key := d.getPrefix(GroupTypeAuth) + id + secret
+	if hit, ok := d.apiClientMemory[key]; ok {
 		if hit.ExpireAt.After(time.Now()) {
 			return hit.Value, nil
 		}
-		delete(d.apiClientMemory, d.prefix+id+secret)
+		delete(d.apiClientMemory, key)
 	}
 	return nil, nil
 }
 
 func (d *MemoryCacheDriver) SetApiClientByIdAndSecret(id string, secret string, client contract.ApiClientInterface) *contract.AuthError {
-	d.apiClientMemory[d.prefix+id+secret] = MemoryCacheEntry[contract.ApiClientInterface]{
+	key := d.getPrefix(GroupTypeAuth) + id + secret
+	d.apiClientMemory[key] = MemoryCacheEntry[contract.ApiClientInterface]{
 		Value:    client,
 		ExpireAt: time.Now().Add(d.ttl),
 	}
@@ -46,17 +52,19 @@ func (d *MemoryCacheDriver) SetApiClientByIdAndSecret(id string, secret string, 
 }
 
 func (d *MemoryCacheDriver) GetApiClientByApiKey(apiKey string) (contract.ApiClientInterface, *contract.AuthError) {
-	if hit, ok := d.apiClientMemory[d.prefix+apiKey]; ok {
+	key := d.getPrefix(GroupTypeAuth) + apiKey
+	if hit, ok := d.apiClientMemory[key]; ok {
 		if hit.ExpireAt.After(time.Now()) {
 			return hit.Value, nil
 		}
-		delete(d.apiClientMemory, d.prefix+apiKey)
+		delete(d.apiClientMemory, key)
 	}
 	return nil, nil
 }
 
 func (d *MemoryCacheDriver) SetApiClientByApiKey(apiKey string, client contract.ApiClientInterface) *contract.AuthError {
-	d.apiClientMemory[d.prefix+apiKey] = MemoryCacheEntry[contract.ApiClientInterface]{
+	key := d.getPrefix(GroupTypeAuth) + apiKey
+	d.apiClientMemory[key] = MemoryCacheEntry[contract.ApiClientInterface]{
 		Value:    client,
 		ExpireAt: time.Now().Add(d.ttl),
 	}
@@ -64,17 +72,19 @@ func (d *MemoryCacheDriver) SetApiClientByApiKey(apiKey string, client contract.
 }
 
 func (d *MemoryCacheDriver) GetApiClientByOneOffToken(token string) (contract.ApiClientInterface, *contract.AuthError) {
-	if hit, ok := d.apiClientMemory[d.prefix+"-one_off-"+token]; ok {
+	key := d.getPrefix(GroupTypeAuth) + "-one_off-" + token
+	if hit, ok := d.apiClientMemory[key]; ok {
 		if hit.ExpireAt.After(time.Now()) {
 			return hit.Value, nil
 		}
-		delete(d.apiClientMemory, d.prefix+token)
+		delete(d.apiClientMemory, key)
 	}
 	return nil, nil
 }
 
 func (d *MemoryCacheDriver) SetApiClientByOneOffToken(oneOffToken contract.OneOffToken, client contract.ApiClientInterface) *contract.AuthError {
-	d.apiClientMemory[d.prefix+"-one_off-"+oneOffToken.Value] = MemoryCacheEntry[contract.ApiClientInterface]{
+	key := d.getPrefix(GroupTypeAuth) + "-one_off-" + oneOffToken.Value
+	d.apiClientMemory[key] = MemoryCacheEntry[contract.ApiClientInterface]{
 		Value:    client,
 		ExpireAt: oneOffToken.Expires,
 	}
@@ -82,22 +92,24 @@ func (d *MemoryCacheDriver) SetApiClientByOneOffToken(oneOffToken contract.OneOf
 }
 
 func (d *MemoryCacheDriver) DeleteApiClientByOneOffToken(token string) *contract.AuthError {
-	delete(d.apiClientMemory, d.prefix+"-one_off-"+token)
+	delete(d.apiClientMemory, d.getPrefix(GroupTypeAuth)+"-one_off-"+token)
 	return nil
 }
 
 func (d *MemoryCacheDriver) GetApiUserByToken(token string) (contract.ApiUserInterface, *contract.AuthError) {
-	if hit, ok := d.apiUserMemory[d.prefix+token]; ok {
+	key := d.getPrefix(GroupTypeAuth) + token
+	if hit, ok := d.apiUserMemory[key]; ok {
 		if hit.ExpireAt.After(time.Now()) {
 			return hit.Value, nil
 		}
-		delete(d.apiUserMemory, d.prefix+token)
+		delete(d.apiUserMemory, key)
 	}
 	return nil, nil
 }
 
 func (d *MemoryCacheDriver) SetApiUserByToken(token string, user contract.ApiUserInterface) *contract.AuthError {
-	d.apiUserMemory[d.prefix+token] = MemoryCacheEntry[contract.ApiUserInterface]{
+	key := d.getPrefix(GroupTypeAuth) + token
+	d.apiUserMemory[key] = MemoryCacheEntry[contract.ApiUserInterface]{
 		Value:    user,
 		ExpireAt: time.Now().Add(d.ttl),
 	}
@@ -105,7 +117,8 @@ func (d *MemoryCacheDriver) SetApiUserByToken(token string, user contract.ApiUse
 }
 
 func (d *MemoryCacheDriver) GetFUPEntry(key string) (*contract.FUPCacheEntry, *contract.AuthError) {
-	if hit, ok := d.fupMemory[d.prefix+key]; ok {
+	entryKey := d.getPrefix(GroupTypeFUP) + key
+	if hit, ok := d.fupMemory[entryKey]; ok {
 		return &hit.Value, nil
 	}
 	return &contract.FUPCacheEntry{
@@ -121,7 +134,7 @@ func (d *MemoryCacheDriver) GetFUPEntry(key string) (*contract.FUPCacheEntry, *c
 }
 
 func (d *MemoryCacheDriver) SetFUPEntry(key string, entry *contract.FUPCacheEntry) *contract.AuthError {
-	d.fupMemory[d.prefix+key] = MemoryCacheEntry[contract.FUPCacheEntry]{
+	d.fupMemory[d.getPrefix(GroupTypeFUP)+key] = MemoryCacheEntry[contract.FUPCacheEntry]{
 		Value: *entry,
 	}
 	return nil
