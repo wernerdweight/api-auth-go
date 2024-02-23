@@ -30,11 +30,8 @@ func (d *RedisCacheDriver) getClient() *redis.Client {
 	return d.client
 }
 
-func (d *RedisCacheDriver) getPrefix(groupPrefix string) string {
-	if len(groupPrefix) > 0 && groupPrefix[len(groupPrefix)-1] != '_' {
-		groupPrefix += "_"
-	}
-	return d.prefix + groupPrefix
+func (d *RedisCacheDriver) getPrefix(groupPrefix GroupType) string {
+	return getPrefix(d.prefix, groupPrefix)
 }
 
 func (d *RedisCacheDriver) unmarshalClient(value string) (contract.ApiClientInterface, *contract.AuthError) {
@@ -62,7 +59,7 @@ func (d *RedisCacheDriver) Init(prefix string, ttl time.Duration) *contract.Auth
 }
 
 func (d *RedisCacheDriver) GetApiClientByIdAndSecret(id string, secret string) (contract.ApiClientInterface, *contract.AuthError) {
-	key := d.getPrefix("auth") + id + secret
+	key := d.getPrefix(GroupTypeAuth) + id + secret
 	value, err := d.getClient().Get(context.Background(), key).Result()
 	if nil != err {
 		if redis.Nil == err {
@@ -74,7 +71,7 @@ func (d *RedisCacheDriver) GetApiClientByIdAndSecret(id string, secret string) (
 }
 
 func (d *RedisCacheDriver) SetApiClientByIdAndSecret(id string, secret string, client contract.ApiClientInterface) *contract.AuthError {
-	key := d.getPrefix("auth") + id + secret
+	key := d.getPrefix(GroupTypeAuth) + id + secret
 	marshalled, authErr := marshaller.MarshalInternal(client)
 	if nil != authErr {
 		return authErr
@@ -91,7 +88,7 @@ func (d *RedisCacheDriver) SetApiClientByIdAndSecret(id string, secret string, c
 }
 
 func (d *RedisCacheDriver) GetApiClientByApiKey(apiKey string) (contract.ApiClientInterface, *contract.AuthError) {
-	key := d.getPrefix("auth") + apiKey
+	key := d.getPrefix(GroupTypeAuth) + apiKey
 	value, err := d.getClient().Get(context.Background(), key).Result()
 	if nil != err {
 		if redis.Nil == err {
@@ -103,7 +100,7 @@ func (d *RedisCacheDriver) GetApiClientByApiKey(apiKey string) (contract.ApiClie
 }
 
 func (d *RedisCacheDriver) SetApiClientByApiKey(apiKey string, client contract.ApiClientInterface) *contract.AuthError {
-	key := d.getPrefix("auth") + apiKey
+	key := d.getPrefix(GroupTypeAuth) + apiKey
 	marshalled, authErr := marshaller.MarshalInternal(client)
 	if nil != authErr {
 		return authErr
@@ -120,7 +117,7 @@ func (d *RedisCacheDriver) SetApiClientByApiKey(apiKey string, client contract.A
 }
 
 func (d *RedisCacheDriver) GetApiClientByOneOffToken(token string) (contract.ApiClientInterface, *contract.AuthError) {
-	key := d.getPrefix("auth") + "-one_off-" + token
+	key := d.getPrefix(GroupTypeAuth) + "-one_off-" + token
 	value, err := d.getClient().Get(context.Background(), key).Result()
 	if nil != err {
 		if redis.Nil == err {
@@ -132,7 +129,7 @@ func (d *RedisCacheDriver) GetApiClientByOneOffToken(token string) (contract.Api
 }
 
 func (d *RedisCacheDriver) SetApiClientByOneOffToken(oneOffToken contract.OneOffToken, client contract.ApiClientInterface) *contract.AuthError {
-	key := d.getPrefix("auth") + "-one_off-" + oneOffToken.Value
+	key := d.getPrefix(GroupTypeAuth) + "-one_off-" + oneOffToken.Value
 	marshalled, authErr := marshaller.MarshalInternal(client)
 	if nil != authErr {
 		return authErr
@@ -149,7 +146,7 @@ func (d *RedisCacheDriver) SetApiClientByOneOffToken(oneOffToken contract.OneOff
 }
 
 func (d *RedisCacheDriver) DeleteApiClientByOneOffToken(token string) *contract.AuthError {
-	key := d.getPrefix("auth") + "-one_off-" + token
+	key := d.getPrefix(GroupTypeAuth) + "-one_off-" + token
 	err := d.getClient().Del(context.Background(), key).Err()
 	if nil != err {
 		return contract.NewInternalError(contract.CacheError, map[string]string{"details": err.Error()})
@@ -158,7 +155,7 @@ func (d *RedisCacheDriver) DeleteApiClientByOneOffToken(token string) *contract.
 }
 
 func (d *RedisCacheDriver) GetApiUserByToken(token string) (contract.ApiUserInterface, *contract.AuthError) {
-	key := d.getPrefix("auth") + token
+	key := d.getPrefix(GroupTypeAuth) + token
 	value, err := d.getClient().Get(context.Background(), key).Result()
 	if nil != err {
 		if redis.Nil == err {
@@ -170,7 +167,7 @@ func (d *RedisCacheDriver) GetApiUserByToken(token string) (contract.ApiUserInte
 }
 
 func (d *RedisCacheDriver) SetApiUserByToken(token string, user contract.ApiUserInterface) *contract.AuthError {
-	key := d.getPrefix("auth") + token
+	key := d.getPrefix(GroupTypeAuth) + token
 	marshalled, authErr := marshaller.MarshalInternal(user)
 	if nil != authErr {
 		return authErr
@@ -187,7 +184,7 @@ func (d *RedisCacheDriver) SetApiUserByToken(token string, user contract.ApiUser
 }
 
 func (d *RedisCacheDriver) GetFUPEntry(key string) (*contract.FUPCacheEntry, *contract.AuthError) {
-	entryKey := d.getPrefix("fup") + key
+	entryKey := d.getPrefix(GroupTypeFUP) + key
 	value, err := d.getClient().Get(context.Background(), entryKey).Result()
 	if nil != err {
 		if redis.Nil == err {
@@ -213,7 +210,7 @@ func (d *RedisCacheDriver) GetFUPEntry(key string) (*contract.FUPCacheEntry, *co
 }
 
 func (d *RedisCacheDriver) SetFUPEntry(key string, entry *contract.FUPCacheEntry) *contract.AuthError {
-	entryKey := d.getPrefix("fup") + key
+	entryKey := d.getPrefix(GroupTypeFUP) + key
 	value, err := json.Marshal(entry)
 	if nil != err {
 		return contract.NewInternalError(contract.CacheError, map[string]string{"details": err.Error()})
