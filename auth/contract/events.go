@@ -46,7 +46,8 @@ func (event *CreateNewApiUserEvent) GetPayload() events.EventPayload {
 }
 
 type RegistrationRequestCompletedEvent struct {
-	ApiUser ApiUserInterface
+	ApiUser   ApiUserInterface
+	ApiClient ApiClientInterface
 }
 
 func (event *RegistrationRequestCompletedEvent) GetKey() events.EventKey {
@@ -71,7 +72,8 @@ func (event *ActivateApiUserEvent) GetPayload() events.EventPayload {
 }
 
 type RegistrationConfirmationCompletedEvent struct {
-	ApiUser ApiUserInterface
+	ApiUser   ApiUserInterface
+	ApiClient ApiClientInterface
 }
 
 func (event *RegistrationConfirmationCompletedEvent) GetKey() events.EventKey {
@@ -83,7 +85,8 @@ func (event *RegistrationConfirmationCompletedEvent) GetPayload() events.EventPa
 }
 
 type RequestResetApiUserPasswordEvent struct {
-	ApiUser ApiUserInterface
+	ApiUser   ApiUserInterface
+	ApiClient ApiClientInterface
 }
 
 func (event *RequestResetApiUserPasswordEvent) GetKey() events.EventKey {
@@ -95,7 +98,8 @@ func (event *RequestResetApiUserPasswordEvent) GetPayload() events.EventPayload 
 }
 
 type ResetApiUserPasswordEvent struct {
-	ApiUser ApiUserInterface
+	ApiUser   ApiUserInterface
+	ApiClient ApiClientInterface
 }
 
 func (event *ResetApiUserPasswordEvent) GetKey() events.EventKey {
@@ -107,7 +111,8 @@ func (event *ResetApiUserPasswordEvent) GetPayload() events.EventPayload {
 }
 
 type ResettingRequestCompletedEvent struct {
-	ApiUser ApiUserInterface
+	ApiUser   ApiUserInterface
+	ApiClient ApiClientInterface
 }
 
 func (event *ResettingRequestCompletedEvent) GetKey() events.EventKey {
@@ -119,7 +124,8 @@ func (event *ResettingRequestCompletedEvent) GetPayload() events.EventPayload {
 }
 
 type ResettingCompletedEvent struct {
-	ApiUser ApiUserInterface
+	ApiUser   ApiUserInterface
+	ApiClient ApiClientInterface
 }
 
 func (event *ResettingCompletedEvent) GetKey() events.EventKey {

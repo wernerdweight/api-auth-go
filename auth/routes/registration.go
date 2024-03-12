@@ -141,7 +141,8 @@ func registrationRequestHandler(c *gin.Context) {
 
 	// call external registration service to handle confirm callback (event)
 	events.GetEventHub().DispatchAsync(&contract.RegistrationRequestCompletedEvent{
-		ApiUser: apiUser,
+		ApiUser:   apiUser,
+		ApiClient: typedApiClient,
 	})
 
 	c.JSON(http.StatusCreated, gin.H{
@@ -199,7 +200,8 @@ func registrationConfirmHandler(c *gin.Context) {
 
 	// issue registration confirmed event
 	events.GetEventHub().DispatchAsync(&contract.RegistrationConfirmationCompletedEvent{
-		ApiUser: apiUser,
+		ApiUser:   apiUser,
+		ApiClient: typedApiClient,
 	})
 
 	c.JSON(http.StatusOK, gin.H{

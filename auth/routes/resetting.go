@@ -78,8 +78,15 @@ func resettingRequestHandler(c *gin.Context) {
 	apiUser.SetResetToken(&token)
 	apiUser.SetResetRequestedAt(&now)
 
+	apiClient, _ := c.Get(constants.ApiClient)
+	var typedApiClient contract.ApiClientInterface
+	if nil != apiClient {
+		typedApiClient = apiClient.(contract.ApiClientInterface)
+	}
+
 	err := events.GetEventHub().DispatchSync(&contract.RequestResetApiUserPasswordEvent{
-		ApiUser: apiUser,
+		ApiUser:   apiUser,
+		ApiClient: typedApiClient,
 	})
 	if nil != err {
 		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
@@ -102,7 +109,8 @@ func resettingRequestHandler(c *gin.Context) {
 
 	// call external service to send reset email (event)
 	events.GetEventHub().DispatchAsync(&contract.ResettingRequestCompletedEvent{
-		ApiUser: apiUser,
+		ApiUser:   apiUser,
+		ApiClient: typedApiClient,
 	})
 
 	c.JSON(http.StatusAccepted, gin.H{
@@ -157,9 +165,16 @@ func resettingResetHandler(c *gin.Context) {
 	apiUser.SetResetToken(nil)
 	apiUser.SetResetRequestedAt(nil)
 
+	apiClient, _ := c.Get(constants.ApiClient)
+	var typedApiClient contract.ApiClientInterface
+	if nil != apiClient {
+		typedApiClient = apiClient.(contract.ApiClientInterface)
+	}
+
 	// call external service to set user details and other fields (event)
 	err = events.GetEventHub().DispatchSync(&contract.ResetApiUserPasswordEvent{
-		ApiUser: apiUser,
+		ApiUser:   apiUser,
+		ApiClient: typedApiClient,
 	})
 	if nil != err {
 		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
@@ -182,7 +197,8 @@ func resettingResetHandler(c *gin.Context) {
 
 	// issue resetting done event
 	events.GetEventHub().DispatchAsync(&contract.ResettingCompletedEvent{
-		ApiUser: apiUser,
+		ApiUser:   apiUser,
+		ApiClient: typedApiClient,
 	})
 
 	c.JSON(http.StatusOK, gin.H{

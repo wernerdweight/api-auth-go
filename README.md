@@ -967,6 +967,7 @@ type CreateNewApiUserEvent struct {
 // NOTE: this event is dispatched asynchronously (returning an error will not affect the registration process)
 type RegistrationRequestCompletedEvent struct {
 	ApiUser ApiUserInterface
+	ApiClient ApiClientInterface
 }
 
 // issued when a new ApiUser is confirmed after registration (before the user is saved)
@@ -981,12 +982,14 @@ type ActivateApiUserEvent struct {
 // NOTE: this event is dispatched asynchronously (returning an error will not affect the confirmation process)
 type RegistrationConfirmationCompletedEvent struct {
 	ApiUser ApiUserInterface
+	ApiClient ApiClientInterface
 }
 
 // issued when an ApiUser requests a password reset (before the user is saved)
 // you can subscribe to this event to do something with the ApiUser (e.g. check user's IP address and/or device)
 type RequestResetApiUserPasswordEvent struct {
 	ApiUser ApiUserInterface
+	ApiClient ApiClientInterface
 }
 
 // issued when an ApiUser requests a password reset (after the user is saved)
@@ -994,12 +997,14 @@ type RequestResetApiUserPasswordEvent struct {
 // NOTE: this event is dispatched asynchronously (returning an error will not affect the reset process)
 type ResettingRequestCompletedEvent struct {
     ApiUser ApiUserInterface
+	ApiClient ApiClientInterface
 }
 
 // issued when an ApiUser resets a password (before the user is saved)
 // you can subscribe to this event to do something with the ApiUser (e.g. check user's IP address and/or device)
 type ResetApiUserPasswordEvent struct {
     ApiUser ApiUserInterface
+	ApiClient ApiClientInterface
 }
 
 // issued when an ApiUser resets a password (after the user is saved)
@@ -1007,6 +1012,7 @@ type ResetApiUserPasswordEvent struct {
 // NOTE: this event is dispatched asynchronously (returning an error will not affect the reset process
 type ResettingCompletedEvent struct {
 	ApiUser ApiUserInterface
+	ApiClient ApiClientInterface
 }
 
 ```
