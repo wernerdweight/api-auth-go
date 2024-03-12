@@ -33,6 +33,7 @@ func (event *ValidateLoginInformationEvent) GetPayload() events.EventPayload {
 
 type CreateNewApiUserEvent struct {
 	ApiUser       ApiUserInterface
+	ApiClient     ApiClientInterface
 	PlainPassword string
 }
 

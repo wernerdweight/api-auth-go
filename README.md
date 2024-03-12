@@ -958,6 +958,8 @@ type ValidateLoginInformationEvent struct {
 // you can subscribe to this event to do something with the ApiUser (e.g. set the scope or your custom fields)
 type CreateNewApiUserEvent struct {
 	ApiUser ApiUserInterface
+	ApiClient ApiClientInterface
+	PlainPassword string
 }
 
 // issued when a new ApiUser is created during registration (after the user is saved)
@@ -971,6 +973,7 @@ type RegistrationRequestCompletedEvent struct {
 // you can subscribe to this event to do something with the ApiUser (e.g. set the scope or your custom fields)
 type ActivateApiUserEvent struct {
 	ApiUser ApiUserInterface
+	ApiClient ApiClientInterface
 }
 
 // issued when a new ApiUser is confirmed after registration (after the user is saved)

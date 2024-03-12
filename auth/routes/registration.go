@@ -107,10 +107,17 @@ func registrationRequestHandler(c *gin.Context) {
 		return
 	}
 
+	apiClient, _ := c.Get(constants.ApiClient)
+	var typedApiClient contract.ApiClientInterface
+	if nil != apiClient {
+		typedApiClient = apiClient.(contract.ApiClientInterface)
+	}
+
 	apiUser := provider.ProvideNew(request.Email, encryptedPassword)
 	// call external service to set user details and other fields (event)
 	err = events.GetEventHub().DispatchSync(&contract.CreateNewApiUserEvent{
 		ApiUser:       apiUser,
+		ApiClient:     typedApiClient,
 		PlainPassword: request.Password,
 	})
 	if nil != err {
