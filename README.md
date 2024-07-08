@@ -1015,6 +1015,22 @@ type ResettingCompletedEvent struct {
 	ApiClient ApiClientInterface
 }
 
+// issued when authentication fails (on requests that require authentication, not on authenticate request)
+// you can subscribe to this event to do something with the error (e.g. log it, etc.)
+// NOTE: this event is dispatched asynchronously (returning an error will not affect the authentication process)
+type AuthenticationFailedEvent struct {
+    Error    AuthError
+    Context  *gin.Context
+    Response gin.H
+}
+
+// issued when authentication is successful (the authenticate request)
+// you can subscribe to this event to do something with the authenticated user (e.g. do more validations, log/update stuff, etc.)
+type AuthenticationCompletedEvent struct {
+    ApiUser   ApiUserInterface
+    ApiClient ApiClientInterface
+}
+
 ```
 
 ### Errors

@@ -7,6 +7,7 @@ import (
 	"github.com/wernerdweight/api-auth-go/auth/constants"
 	"github.com/wernerdweight/api-auth-go/auth/contract"
 	"github.com/wernerdweight/api-auth-go/auth/marshaller"
+	"github.com/wernerdweight/events-go"
 	generator "github.com/wernerdweight/token-generator-go"
 	"net/http"
 	"strings"
@@ -46,6 +47,12 @@ func authenticateHandler(c *gin.Context) {
 		return
 	}
 
+	apiClient, _ := c.Get(constants.ApiClient)
+	var typedApiClient contract.ApiClientInterface
+	if nil != apiClient {
+		typedApiClient = apiClient.(contract.ApiClientInterface)
+	}
+
 	login, password, err := extractCredentials(authHeader)
 	if nil != err {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
@@ -71,6 +78,20 @@ func authenticateHandler(c *gin.Context) {
 	now := time.Now()
 	apiUser.AddApiToken(token)
 	apiUser.SetLastLoginAt(&now)
+
+	// authentication completed (issue an event for external handling)
+	loginErr := events.GetEventHub().DispatchSync(&contract.AuthenticationCompletedEvent{
+		ApiUser:   apiUser,
+		ApiClient: typedApiClient,
+	})
+	if nil != loginErr {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			"code":    contract.Unauthorized,
+			"error":   contract.AuthErrorCodes[contract.Unauthorized],
+			"payload": map[string]string{"details": loginErr.Error()},
+		})
+		return
+	}
 
 	err = apiUserProvider.Save(apiUser)
 	if nil != err {

@@ -16,6 +16,7 @@ const (
 	ResettingRequestCompletedEventKey         = "api-auth-go.resetting-request-completed"
 	ResettingCompletedEventKey                = "api-auth-go.resetting-completed"
 	AuthenticationFailedEventKey              = "api-auth-go.authentication-failed"
+	AuthenticationCompletedEventKey           = "api-auth-go.authentication-completed"
 )
 
 type ValidateLoginInformationEvent struct {
@@ -147,5 +148,18 @@ func (event *AuthenticationFailedEvent) GetKey() events.EventKey {
 }
 
 func (event *AuthenticationFailedEvent) GetPayload() events.EventPayload {
+	return event
+}
+
+type AuthenticationCompletedEvent struct {
+	ApiUser   ApiUserInterface
+	ApiClient ApiClientInterface
+}
+
+func (event *AuthenticationCompletedEvent) GetKey() events.EventKey {
+	return AuthenticationCompletedEventKey
+}
+
+func (event *AuthenticationCompletedEvent) GetPayload() events.EventPayload {
 	return event
 }
