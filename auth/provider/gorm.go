@@ -90,7 +90,7 @@ func (p GormApiUserProvider) ProvideByLoginAndPassword(login string, password st
 func (p GormApiUserProvider) ProvideByLogin(login string) (contract.ApiUserInterface, *contract.AuthError) {
 	apiUser := p.newApiUser()
 	conn := p.getConnection()
-	result := conn.First(&apiUser, "lower(login) = lower(?)", login)
+	result := conn.First(&apiUser, "lower(email) = lower(?)", login)
 	if nil != result.Error {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, contract.NewAuthError(contract.UserNotFound, nil)
