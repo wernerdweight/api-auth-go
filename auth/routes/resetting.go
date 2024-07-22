@@ -25,7 +25,7 @@ func resettingRequestHandler(c *gin.Context) {
 	if err := c.ShouldBindJSON(&request); nil != err {
 		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
 			"code":    contract.InvalidRequest,
-			"error":   contract.AuthErrorCodes[contract.InvalidRequest],
+			"message": contract.AuthErrorCodes[contract.InvalidRequest],
 			"payload": map[string]string{"details": err.Error()},
 		})
 		return
@@ -36,7 +36,7 @@ func resettingRequestHandler(c *gin.Context) {
 	if nil == apiUser {
 		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
 			"code":    contract.UserNotFound,
-			"error":   contract.AuthErrorCodes[contract.UserNotFound],
+			"message": contract.AuthErrorCodes[contract.UserNotFound],
 			"payload": nil,
 		})
 		return
@@ -44,7 +44,7 @@ func resettingRequestHandler(c *gin.Context) {
 	if nil != authErr && contract.UserNotFound != authErr.Code {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"code":    authErr.Code,
-			"error":   authErr.Err.Error(),
+			"message": authErr.Err.Error(),
 			"payload": authErr.Payload,
 		})
 		return
@@ -52,7 +52,7 @@ func resettingRequestHandler(c *gin.Context) {
 	if !apiUser.IsActive() {
 		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 			"code":    contract.UserNotActive,
-			"error":   contract.AuthErrorCodes[contract.UserNotActive],
+			"message": contract.AuthErrorCodes[contract.UserNotActive],
 			"payload": nil,
 		})
 		return
@@ -65,7 +65,7 @@ func resettingRequestHandler(c *gin.Context) {
 		if expiresAt.After(time.Now()) {
 			c.AbortWithStatusJSON(http.StatusConflict, gin.H{
 				"code":    contract.ResettingAlreadyRequested,
-				"error":   contract.AuthErrorCodes[contract.ResettingAlreadyRequested],
+				"message": contract.AuthErrorCodes[contract.ResettingAlreadyRequested],
 				"payload": map[string]time.Time{"expiresAt": expiresAt},
 			})
 			return
@@ -91,7 +91,7 @@ func resettingRequestHandler(c *gin.Context) {
 	if nil != err {
 		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
 			"code":    contract.InvalidRequest,
-			"error":   contract.AuthErrorCodes[contract.InvalidRequest],
+			"message": contract.AuthErrorCodes[contract.InvalidRequest],
 			"payload": map[string]string{"details": err.Error()},
 		})
 		return
@@ -101,7 +101,7 @@ func resettingRequestHandler(c *gin.Context) {
 	if nil != authErr {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"code":    authErr.Code,
-			"error":   authErr.Err.Error(),
+			"message": authErr.Err.Error(),
 			"payload": authErr.Payload,
 		})
 		return
@@ -124,7 +124,7 @@ func resettingResetHandler(c *gin.Context) {
 	if err := c.ShouldBindJSON(&request); nil != err {
 		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
 			"code":    contract.InvalidRequest,
-			"error":   contract.AuthErrorCodes[contract.InvalidRequest],
+			"message": contract.AuthErrorCodes[contract.InvalidRequest],
 			"payload": map[string]string{"details": err.Error()},
 		})
 		return
@@ -135,7 +135,7 @@ func resettingResetHandler(c *gin.Context) {
 	if nil != authErr {
 		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
 			"code":    authErr.Code,
-			"error":   authErr.Err.Error(),
+			"message": authErr.Err.Error(),
 			"payload": authErr.Payload,
 		})
 		return
@@ -145,7 +145,7 @@ func resettingResetHandler(c *gin.Context) {
 	if nil != authErr {
 		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
 			"code":    authErr.Code,
-			"error":   authErr.Err.Error(),
+			"message": authErr.Err.Error(),
 			"payload": map[string][]string{"details": authErr.Payload.([]string)},
 		})
 		return
@@ -155,7 +155,7 @@ func resettingResetHandler(c *gin.Context) {
 	if nil != err {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"code":    contract.EncryptionError,
-			"error":   contract.AuthErrorCodes[contract.EncryptionError],
+			"message": contract.AuthErrorCodes[contract.EncryptionError],
 			"payload": map[string]string{"details": err.Error()},
 		})
 		return
@@ -179,7 +179,7 @@ func resettingResetHandler(c *gin.Context) {
 	if nil != err {
 		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
 			"code":    contract.InvalidRequest,
-			"error":   contract.AuthErrorCodes[contract.InvalidRequest],
+			"message": contract.AuthErrorCodes[contract.InvalidRequest],
 			"payload": map[string]string{"details": err.Error()},
 		})
 		return
@@ -189,7 +189,7 @@ func resettingResetHandler(c *gin.Context) {
 	if nil != authErr {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"code":    authErr.Code,
-			"error":   authErr.Err.Error(),
+			"message": authErr.Err.Error(),
 			"payload": authErr.Payload,
 		})
 		return

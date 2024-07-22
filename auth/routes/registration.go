@@ -47,7 +47,7 @@ func registrationRequestHandler(c *gin.Context) {
 	if err := c.ShouldBindJSON(&request); nil != err {
 		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
 			"code":    contract.InvalidRequest,
-			"error":   contract.AuthErrorCodes[contract.InvalidRequest],
+			"message": contract.AuthErrorCodes[contract.InvalidRequest],
 			"payload": map[string]string{"details": err.Error()},
 		})
 		return
@@ -61,7 +61,7 @@ func registrationRequestHandler(c *gin.Context) {
 	if nil != err {
 		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
 			"code":    contract.InvalidRequest,
-			"error":   contract.AuthErrorCodes[contract.InvalidRequest],
+			"message": contract.AuthErrorCodes[contract.InvalidRequest],
 			"payload": map[string]string{"details": err.Error()},
 		})
 		return
@@ -73,7 +73,7 @@ func registrationRequestHandler(c *gin.Context) {
 	if nil != user {
 		c.AbortWithStatusJSON(http.StatusConflict, gin.H{
 			"code":    contract.UserAlreadyExists,
-			"error":   contract.AuthErrorCodes[contract.UserAlreadyExists],
+			"message": contract.AuthErrorCodes[contract.UserAlreadyExists],
 			"payload": nil,
 		})
 		return
@@ -81,7 +81,7 @@ func registrationRequestHandler(c *gin.Context) {
 	if nil != authErr && contract.UserNotFound != authErr.Code {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"code":    authErr.Code,
-			"error":   authErr.Err.Error(),
+			"message": authErr.Err.Error(),
 			"payload": authErr.Payload,
 		})
 		return
@@ -91,7 +91,7 @@ func registrationRequestHandler(c *gin.Context) {
 	if nil != authErr {
 		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
 			"code":    authErr.Code,
-			"error":   authErr.Err.Error(),
+			"message": authErr.Err.Error(),
 			"payload": map[string][]string{"details": authErr.Payload.([]string)},
 		})
 		return
@@ -101,7 +101,7 @@ func registrationRequestHandler(c *gin.Context) {
 	if nil != err {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"code":    contract.EncryptionError,
-			"error":   contract.AuthErrorCodes[contract.EncryptionError],
+			"message": contract.AuthErrorCodes[contract.EncryptionError],
 			"payload": map[string]string{"details": err.Error()},
 		})
 		return
@@ -123,7 +123,7 @@ func registrationRequestHandler(c *gin.Context) {
 	if nil != err {
 		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
 			"code":    contract.InvalidRequest,
-			"error":   contract.AuthErrorCodes[contract.InvalidRequest],
+			"message": contract.AuthErrorCodes[contract.InvalidRequest],
 			"payload": map[string]string{"details": err.Error()},
 		})
 		return
@@ -133,7 +133,7 @@ func registrationRequestHandler(c *gin.Context) {
 	if nil != authErr {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"code":    authErr.Code,
-			"error":   authErr.Err.Error(),
+			"message": authErr.Err.Error(),
 			"payload": authErr.Payload,
 		})
 		return
@@ -158,7 +158,7 @@ func registrationConfirmHandler(c *gin.Context) {
 	if nil != authErr {
 		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
 			"code":    authErr.Code,
-			"error":   authErr.Err.Error(),
+			"message": authErr.Err.Error(),
 			"payload": authErr.Payload,
 		})
 		return
@@ -182,7 +182,7 @@ func registrationConfirmHandler(c *gin.Context) {
 	if nil != err {
 		c.AbortWithStatusJSON(http.StatusUnprocessableEntity, gin.H{
 			"code":    contract.InvalidRequest,
-			"error":   contract.AuthErrorCodes[contract.InvalidRequest],
+			"message": contract.AuthErrorCodes[contract.InvalidRequest],
 			"payload": map[string]string{"details": err.Error()},
 		})
 		return
@@ -192,7 +192,7 @@ func registrationConfirmHandler(c *gin.Context) {
 	if nil != authErr {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"code":    authErr.Code,
-			"error":   authErr.Err.Error(),
+			"message": authErr.Err.Error(),
 			"payload": authErr.Payload,
 		})
 		return

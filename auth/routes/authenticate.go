@@ -41,7 +41,7 @@ func authenticateHandler(c *gin.Context) {
 	if authHeader == "" {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"code":    contract.Unauthorized,
-			"error":   contract.AuthErrorCodes[contract.Unauthorized],
+			"message": contract.AuthErrorCodes[contract.Unauthorized],
 			"payload": nil,
 		})
 		return
@@ -57,7 +57,7 @@ func authenticateHandler(c *gin.Context) {
 	if nil != err {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"code":    err.Code,
-			"error":   err.Err.Error(),
+			"message": err.Err.Error(),
 			"payload": err.Payload,
 		})
 	}
@@ -67,7 +67,7 @@ func authenticateHandler(c *gin.Context) {
 	if nil != err {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"code":    err.Code,
-			"error":   err.Err.Error(),
+			"message": err.Err.Error(),
 			"payload": err.Payload,
 		})
 		return
@@ -87,7 +87,7 @@ func authenticateHandler(c *gin.Context) {
 	if nil != loginErr {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"code":    contract.Unauthorized,
-			"error":   contract.AuthErrorCodes[contract.Unauthorized],
+			"message": contract.AuthErrorCodes[contract.Unauthorized],
 			"payload": map[string]string{"details": loginErr.Error()},
 		})
 		return
@@ -97,7 +97,7 @@ func authenticateHandler(c *gin.Context) {
 	if nil != err {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"code":    err.Code,
-			"error":   err.Err.Error(),
+			"message": err.Err.Error(),
 			"payload": err.Payload,
 		})
 		return
@@ -109,7 +109,7 @@ func authenticateHandler(c *gin.Context) {
 	if nil != err {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"code":    err.Code,
-			"error":   err.Err.Error(),
+			"message": err.Err.Error(),
 			"payload": err.Payload,
 		})
 		return
