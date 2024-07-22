@@ -1072,7 +1072,7 @@ The payload always has the same structure:
 ```json5
 {
   "code": 8,  // unique error code
-  "error": "client access forbidden", // error message for give code
+  "message": "client access forbidden", // error message for give code
   "payload": null // optional payload, this can be anything
 }
 ```

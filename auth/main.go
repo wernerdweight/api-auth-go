@@ -44,7 +44,7 @@ func Middleware(r *gin.Engine, c contract.Config) gin.HandlerFunc {
 		if nil != err {
 			errorResponse := gin.H{
 				"code":    err.Code,
-				"error":   err.Err.Error(),
+				"message": err.Err.Error(),
 				"payload": err.Payload,
 			}
 			c.AbortWithStatusJSON(err.Status, errorResponse)

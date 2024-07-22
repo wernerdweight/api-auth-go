@@ -14,7 +14,7 @@ func generateTokenHandler(c *gin.Context) {
 	if !config.ProviderInstance.IsCacheEnabled() {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"code":    contract.CacheDisabled,
-			"error":   contract.AuthErrorCodes[contract.CacheDisabled],
+			"message": contract.AuthErrorCodes[contract.CacheDisabled],
 			"payload": nil,
 		})
 		return
@@ -25,7 +25,7 @@ func generateTokenHandler(c *gin.Context) {
 	if !ok {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"code":    contract.Unauthorized,
-			"error":   contract.AuthErrorCodes[contract.Unauthorized],
+			"message": contract.AuthErrorCodes[contract.Unauthorized],
 			"payload": nil,
 		})
 		return
