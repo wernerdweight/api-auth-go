@@ -43,6 +43,7 @@ const (
 	CacheDisabled
 	InvalidOneOffToken
 	InvalidFUPCookie
+	OneOffTokenNotAllowed
 )
 
 var AuthErrorCodes = map[AuthErrorCode]string{
@@ -74,6 +75,7 @@ var AuthErrorCodes = map[AuthErrorCode]string{
 	CacheDisabled:             "cache driver needs to be configured for this functionality to work",
 	InvalidOneOffToken:        "one-off token is invalid, already used or expired",
 	InvalidFUPCookie:          "FUP cookie present, but invalid",
+	OneOffTokenNotAllowed:     "one-off token authentication is not allowed for this endpoint",
 }
 
 func NewAuthError(code AuthErrorCode, payload interface{}) *AuthError {

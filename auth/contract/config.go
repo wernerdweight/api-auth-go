@@ -78,4 +78,10 @@ type Config struct {
 
 	// Cache: cache configuration (optional)
 	Cache *CacheConfig
+
+	// TargetOneOffTokenHandlers: list of handlers to target for one-off token authentication (optional; if you omit target handlers, all handlers will be targeted)
+	TargetOneOffTokenHandlers *[]string
+	// '.*'            	# all handlers
+	// '/v1/*'   		# all handlers starting with '/v1/'
+	// '/v1/some/path'  # only '/v1/some/path' handler
 }

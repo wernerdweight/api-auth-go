@@ -26,6 +26,10 @@ func (p *Provider) GetExcludeHandlers() *[]string {
 	return p.config.ExcludeHandlers
 }
 
+func (p *Provider) GetTargetOneOffTokenHandlers() *[]string {
+	return p.config.TargetOneOffTokenHandlers
+}
+
 func (p *Provider) GetClientProvider() contract.ApiClientProviderInterface[contract.ApiClientInterface] {
 	return p.config.Client.Provider
 }
@@ -201,6 +205,10 @@ func (p *Provider) Init(config contract.Config) {
 	if nil != config.Cache {
 		p.initCache(config)
 	}
+
+	if nil != config.TargetOneOffTokenHandlers {
+		p.config.TargetOneOffTokenHandlers = config.TargetOneOffTokenHandlers
+	}
 }
 
 var (
@@ -250,5 +258,6 @@ var ProviderInstance = &Provider{
 			Prefix: &defaultCachePrefix,
 			TTL:    &defaultCacheTTL,
 		},
+		TargetOneOffTokenHandlers: nil,
 	},
 }

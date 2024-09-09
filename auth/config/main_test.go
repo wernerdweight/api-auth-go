@@ -97,6 +97,7 @@ func (s *TestSuite) SetupTest() {
 				Prefix: &defaultCachePrefix,
 				TTL:    &defaultCacheTTL,
 			},
+			TargetOneOffTokenHandlers: nil,
 		},
 	}
 }
@@ -154,6 +155,15 @@ func (s *TestSuite) TestProvider_GetExcludeHandlers() {
 		ExcludeHandlers: &handlers,
 	})
 	s.Equal(&handlers, s.provider.GetExcludeHandlers())
+}
+
+func (s *TestSuite) TestProvider_GetTargetOneOffTokenHandlers() {
+	s.Nil(s.provider.GetTargetOneOffTokenHandlers())
+	handlers := []string{".*"}
+	s.provider.Init(contract.Config{
+		TargetOneOffTokenHandlers: &handlers,
+	})
+	s.Equal(&handlers, s.provider.GetTargetOneOffTokenHandlers())
 }
 
 func (s *TestSuite) TestProvider_GetClientProvider() {

@@ -52,6 +52,25 @@ func shouldAuthenticateByApiKey(c *gin.Context) bool {
 }
 
 func authenticateApiClientByOneOffToken(c *gin.Context) (contract.ApiClientInterface, *contract.AuthError) {
+	// check if one-off token is allowed for the current request
+	targetHandlers := config.ProviderInstance.GetTargetOneOffTokenHandlers()
+	if nil != targetHandlers && len(*targetHandlers) > 0 {
+		inScope := false
+		for _, targetHandler := range *targetHandlers {
+			matched, err := regexp.MatchString(targetHandler, c.Request.URL.String())
+			if nil != err {
+				log.Printf("can't match one-off token target handler pattern '%s': %v", targetHandler, err)
+			}
+			if matched {
+				inScope = true
+				break
+			}
+		}
+		if !inScope {
+			return nil, contract.NewAuthError(contract.OneOffTokenNotAllowed, nil)
+		}
+	}
+
 	token := c.Request.Header.Get(constants.OneOffTokenHeader)
 	if !config.ProviderInstance.IsCacheEnabled() {
 		return nil, contract.NewInternalError(contract.CacheDisabled, nil)

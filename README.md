@@ -92,6 +92,12 @@ Full configuration structure (only client configuration is mandatory, default va
         // TTL: cache TTL in seconds - defaults to 3600 (1 hour)
         TTL *time.Duration
     }
+
+    // TargetOneOffTokenHandlers: list of handlers to target for one-off token authentication (optional; if you omit target handlers, all handlers will be targeted)
+    TargetOneOffTokenHandlers *[]string
+    // '.*'            	# all handlers
+    // '/v1/*'   		# all handlers starting with '/v1/'
+    // '/v1/some/path'  # only '/v1/some/path' handler
 }
 ```
 
