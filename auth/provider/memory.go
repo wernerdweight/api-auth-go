@@ -21,9 +21,17 @@ func (p MemoryApiClientProvider) ProvideByIdAndSecret(id string, secret string) 
 }
 
 func (p MemoryApiClientProvider) ProvideByApiKey(apiKey string) (contract.ApiClientInterface, *contract.AuthError) {
-	for _, client := range p.memory {
+	for i := range p.memory {
+		client := &p.memory[i]
 		if client.ApiKey == apiKey {
-			return &client, nil
+			return client, nil
+		}
+		for j := range client.AdditionalKeys {
+			key := &client.AdditionalKeys[j]
+			if key.Key == apiKey {
+				client.CurrentApiKey = key
+				return client, nil
+			}
 		}
 	}
 

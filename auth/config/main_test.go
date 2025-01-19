@@ -86,6 +86,7 @@ func (s *TestSuite) SetupTest() {
 			},
 			Mode: &contract.ModesConfig{
 				ApiKey:            &defaultApiKeyMode,
+				AdditionalApiKeys: &defaultAdditionalApiKeys,
 				ClientIdAndSecret: &defaultClientIdAndSecretMode,
 				OneOffToken:       &defaultOneOffTokenMode,
 			},
@@ -126,6 +127,17 @@ func (s *TestSuite) TestProvider_IsApiKeyModeEnabled() {
 		},
 	})
 	s.True(s.provider.IsApiKeyModeEnabled())
+}
+
+func (s *TestSuite) TestProvider_IsAdditionalApiKeysEnabled() {
+	s.False(s.provider.IsAdditionalApiKeysEnabled())
+	enabled := true
+	s.provider.Init(contract.Config{
+		Mode: &contract.ModesConfig{
+			AdditionalApiKeys: &enabled,
+		},
+	})
+	s.True(s.provider.IsAdditionalApiKeysEnabled())
 }
 
 func (s *TestSuite) TestProvider_IsClientIdAndSecretModeEnabled() {

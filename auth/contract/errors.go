@@ -44,6 +44,7 @@ const (
 	InvalidOneOffToken
 	InvalidFUPCookie
 	OneOffTokenNotAllowed
+	ApiKeyExpired
 )
 
 var AuthErrorCodes = map[AuthErrorCode]string{
@@ -76,6 +77,7 @@ var AuthErrorCodes = map[AuthErrorCode]string{
 	InvalidOneOffToken:        "one-off token is invalid, already used or expired",
 	InvalidFUPCookie:          "FUP cookie present, but invalid",
 	OneOffTokenNotAllowed:     "one-off token authentication is not allowed for this endpoint",
+	ApiKeyExpired:             "API key expired",
 }
 
 func NewAuthError(code AuthErrorCode, payload interface{}) *AuthError {

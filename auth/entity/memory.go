@@ -7,11 +7,13 @@ import (
 
 // MemoryApiClient is the simplest struct that implements ApiClientInterface
 type MemoryApiClient struct {
-	Id          string                `json:"clientId" groups:"internal"`
-	Secret      string                `json:"clientSecret" groups:"internal"`
-	ApiKey      string                `json:"apiKey" groups:"internal"`
-	AccessScope *contract.AccessScope `json:"clientScope" groups:"internal,public"`
-	FUPScope    *contract.FUPScope    `json:"fupConfig" groups:"internal"`
+	Id             string                `json:"clientId" groups:"internal"`
+	Secret         string                `json:"clientSecret" groups:"internal"`
+	ApiKey         string                `json:"apiKey" groups:"internal"`
+	AdditionalKeys []MemoryApiClientKey  `json:"-"`
+	CurrentApiKey  *MemoryApiClientKey   `json:"-"`
+	AccessScope    *contract.AccessScope `json:"clientScope" groups:"internal,public"`
+	FUPScope       *contract.FUPScope    `json:"fupConfig" groups:"internal"`
 }
 
 func (c *MemoryApiClient) GetClientId() string {
@@ -26,12 +28,58 @@ func (c *MemoryApiClient) GetApiKey() string {
 	return c.ApiKey
 }
 
+func (c *MemoryApiClient) GetCurrentApiKey() contract.ApiClientKeyInterface {
+	if c.CurrentApiKey != nil {
+		return c.CurrentApiKey
+	}
+	return nil
+}
+
+func (c *MemoryApiClient) SetCurrentApiKey(key contract.ApiClientKeyInterface) {
+	c.CurrentApiKey = key.(*MemoryApiClientKey)
+}
+
 func (c *MemoryApiClient) GetClientScope() *contract.AccessScope {
+	if c.GetCurrentApiKey() != nil {
+		return c.GetCurrentApiKey().GetClientScope()
+	}
 	return c.AccessScope
 }
 
 func (c *MemoryApiClient) GetFUPScope() *contract.FUPScope {
+	if c.GetCurrentApiKey() != nil {
+		return c.GetCurrentApiKey().GetFUPScope()
+	}
 	return c.FUPScope
+}
+
+// MemoryApiClientKey is the simplest struct that implements ApiClientKeyInterface
+type MemoryApiClientKey struct {
+	Key            string                `json:"key" groups:"internal,public"`
+	ExpirationDate *time.Time            `json:"expirationDate" groups:"internal,public"`
+	ApiClient      *MemoryApiClient      `json:"-"`
+	AccessScope    *contract.AccessScope `json:"clientScope" groups:"internal,public"`
+	FUPScope       *contract.FUPScope    `json:"fupConfig" groups:"internal"`
+}
+
+func (k *MemoryApiClientKey) GetKey() string {
+	return k.Key
+}
+
+func (k *MemoryApiClientKey) GetClientScope() *contract.AccessScope {
+	return k.AccessScope
+}
+
+func (k *MemoryApiClientKey) GetFUPScope() *contract.FUPScope {
+	return k.FUPScope
+}
+
+func (k *MemoryApiClientKey) GetApiClient() contract.ApiClientInterface {
+	return k.ApiClient
+}
+
+func (k *MemoryApiClientKey) GetExpirationDate() *time.Time {
+	return k.ExpirationDate
 }
 
 // MemoryApiUser is the simplest struct that implements ApiUserInterface

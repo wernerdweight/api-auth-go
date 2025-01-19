@@ -201,8 +201,17 @@ type ApiClientInterface interface {
 	GetClientId() string
 	GetClientSecret() string
 	GetApiKey() string
+	GetCurrentApiKey() ApiClientKeyInterface
+	SetCurrentApiKey(apiClientKey ApiClientKeyInterface)
 	GetClientScope() *AccessScope
 	GetFUPScope() *FUPScope
+}
+type ApiClientKeyInterface interface {
+	GetKey() string
+	GetClientScope() *AccessScope
+	GetFUPScope() *FUPScope
+	GetApiClient() ApiClientInterface
+	GetExpirationDate() *time.Time
 }
 type ApiUserInterface interface {
 	AddApiToken(apiToken ApiUserTokenInterface)
