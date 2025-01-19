@@ -71,10 +71,10 @@ func (c *GormApiClient) GetFUPScope() *contract.FUPScope {
 // GormApiClientKey is a struct that implements ApiClientKeyInterface for GORM
 type GormApiClientKey struct {
 	ID             uuid.UUID             `gorm:"primaryKey;type:uuid;default:uuid_generate_v4()" json:"id" groups:"internal,public,id"`
-	Key            string                `json:"key" groups:"internal,credentials"`
+	Key            string                `gorm:"uniqueIndex;not null" json:"key" groups:"internal,credentials"`
 	ExpirationDate *time.Time            `json:"expirationDate" groups:"internal,public"`
 	ApiClient      *GormApiClient        `json:"-"`
-	ApiClientID    uuid.UUID             `json:"apiClientId" groups:"internal"`
+	ApiClientID    uuid.UUID             `gorm:"not null" json:"apiClientId" groups:"internal"`
 	CreatedAt      time.Time             `gorm:"not null;default:CURRENT_TIMESTAMP" json:"createdAt" groups:"internal"`
 	AccessScope    *contract.AccessScope `gorm:"type:jsonb;serializer:json" json:"clientScope" groups:"internal,public"`
 	FUPScope       *contract.FUPScope    `gorm:"type:jsonb;serializer:json" json:"fupConfig" groups:"internal"`

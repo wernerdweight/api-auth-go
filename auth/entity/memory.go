@@ -29,7 +29,10 @@ func (c *MemoryApiClient) GetApiKey() string {
 }
 
 func (c *MemoryApiClient) GetCurrentApiKey() contract.ApiClientKeyInterface {
-	return c.CurrentApiKey
+	if c.CurrentApiKey != nil {
+		return c.CurrentApiKey
+	}
+	return nil
 }
 
 func (c *MemoryApiClient) SetCurrentApiKey(key contract.ApiClientKeyInterface) {
