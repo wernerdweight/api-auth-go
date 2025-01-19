@@ -14,6 +14,10 @@ func (p *Provider) IsApiKeyModeEnabled() bool {
 	return *p.config.Mode.ApiKey
 }
 
+func (p *Provider) IsAdditionalApiKeysEnabled() bool {
+	return *p.config.Mode.AdditionalApiKeys
+}
+
 func (p *Provider) IsClientIdAndSecretModeEnabled() bool {
 	return *p.config.Mode.ClientIdAndSecret
 }
@@ -145,6 +149,9 @@ func (p *Provider) initMode(config contract.Config) {
 	if nil != config.Mode.ApiKey {
 		p.config.Mode.ApiKey = config.Mode.ApiKey
 	}
+	if nil != config.Mode.AdditionalApiKeys {
+		p.config.Mode.AdditionalApiKeys = config.Mode.AdditionalApiKeys
+	}
 	if nil != config.Mode.ClientIdAndSecret {
 		p.config.Mode.ClientIdAndSecret = config.Mode.ClientIdAndSecret
 	}
@@ -213,6 +220,7 @@ func (p *Provider) Init(config contract.Config) {
 
 var (
 	defaultApiKeyMode                     = false
+	defaultAdditionalApiKeys              = false
 	defaultOneOffTokenMode                = false
 	defaultClientIdAndSecretMode          = true
 	defaultExcludeOptionsRequests         = false
@@ -247,6 +255,7 @@ var ProviderInstance = &Provider{
 		},
 		Mode: &contract.ModesConfig{
 			ApiKey:            &defaultApiKeyMode,
+			AdditionalApiKeys: &defaultAdditionalApiKeys,
 			ClientIdAndSecret: &defaultClientIdAndSecretMode,
 			OneOffToken:       &defaultOneOffTokenMode,
 		},

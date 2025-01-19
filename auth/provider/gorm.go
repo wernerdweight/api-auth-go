@@ -14,8 +14,9 @@ import (
 
 // GormApiClientProvider is an implementation of the ApiClientProviderInterface for GORM
 type GormApiClientProvider struct {
-	newApiClient  func() contract.ApiClientInterface
-	getConnection func() *gorm.DB
+	newApiClient    func() contract.ApiClientInterface
+	newApiClientKey func() contract.ApiClientKeyInterface
+	getConnection   func() *gorm.DB
 }
 
 func (p GormApiClientProvider) ProvideByIdAndSecret(id string, secret string) (contract.ApiClientInterface, *contract.AuthError) {
@@ -34,6 +35,36 @@ func (p GormApiClientProvider) ProvideByIdAndSecret(id string, secret string) (c
 	return apiClient, nil
 }
 
+func (p GormApiClientProvider) provideByAdditionalKey(apiKey string) (contract.ApiClientInterface, *contract.AuthError) {
+	conn := p.getConnection()
+	apiClientKey := p.newApiClientKey()
+	result := conn.Joins("ApiClient").First(&apiClientKey, entity.GormApiClientKey{
+		Key: apiKey,
+	})
+	if nil != result.Error {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, contract.NewAuthError(contract.ClientNotFound, nil)
+		}
+		return nil, contract.NewInternalError(contract.DatabaseError, map[string]string{"details": result.Error.Error()})
+	}
+
+	if apiClientKey.GetExpirationDate() != nil && apiClientKey.GetExpirationDate().Before(time.Now()) {
+		return nil, contract.NewAuthError(contract.ApiKeyExpired, map[string]time.Time{"expiredAt": *apiClientKey.GetExpirationDate()})
+	}
+
+	// ApiClient needs to be fetched separately to return user defined model (otherwise it would be GormApiClient)
+	apiClient := p.newApiClient()
+	result = conn.First(&apiClient, apiClientKey.GetApiClient().(*entity.GormApiClient).ID)
+	if nil != result.Error {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, contract.NewAuthError(contract.ClientNotFound, nil)
+		}
+		return nil, contract.NewInternalError(contract.DatabaseError, map[string]string{"details": result.Error.Error()})
+	}
+	apiClient.SetCurrentApiKey(apiClientKey)
+	return apiClient, nil
+}
+
 func (p GormApiClientProvider) ProvideByApiKey(apiKey string) (contract.ApiClientInterface, *contract.AuthError) {
 	apiClient := p.newApiClient()
 	conn := p.getConnection()
@@ -42,6 +73,9 @@ func (p GormApiClientProvider) ProvideByApiKey(apiKey string) (contract.ApiClien
 	})
 	if nil != result.Error {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			if config.ProviderInstance.IsAdditionalApiKeysEnabled() {
+				return p.provideByAdditionalKey(apiKey)
+			}
 			return nil, contract.NewAuthError(contract.ClientNotFound, nil)
 		}
 		return nil, contract.NewInternalError(contract.DatabaseError, map[string]string{"details": result.Error.Error()})
@@ -58,10 +92,11 @@ func (p GormApiClientProvider) Save(client contract.ApiClientInterface) *contrac
 	return nil
 }
 
-func NewGormApiClientProvider(newApiClient func() contract.ApiClientInterface, getConnection func() *gorm.DB) *GormApiClientProvider {
+func NewGormApiClientProvider(newApiClient func() contract.ApiClientInterface, newApiClientKey func() contract.ApiClientKeyInterface, getConnection func() *gorm.DB) *GormApiClientProvider {
 	return &GormApiClientProvider{
-		newApiClient:  newApiClient,
-		getConnection: getConnection,
+		newApiClient:    newApiClient,
+		newApiClientKey: newApiClientKey,
+		getConnection:   getConnection,
 	}
 }
 

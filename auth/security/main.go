@@ -241,7 +241,12 @@ func Authenticate(c *gin.Context) *contract.AuthError {
 
 	if config.ProviderInstance.IsClientFUPEnabled() {
 		clientFUPChecker := config.ProviderInstance.GetClientFUPChecker()
-		fupLimits := clientFUPChecker.Check(apiClient.GetFUPScope(), c, apiClient.GetClientId())
+		fupKey := apiClient.GetClientId()
+		if apiClient.GetCurrentApiKey() != nil {
+			// use API key as a part of the FUP key if additional API key is provided (it might have different limits)
+			fupKey = fmt.Sprintf("%s:%s", fupKey, apiClient.GetCurrentApiKey().GetKey())
+		}
+		fupLimits := clientFUPChecker.Check(apiClient.GetFUPScope(), c, fupKey)
 		if nil != fupLimits.Error {
 			return fupLimits.Error
 		}

@@ -39,6 +39,8 @@ type UserConfig struct {
 type ModesConfig struct {
 	// ApiKey: api key authentication mode (optional; default false)
 	ApiKey *bool
+	// AdditionalApiKeys: enable additional api keys (different scopes, FUP, expiration; optional; default false)
+	AdditionalApiKeys *bool
 	// ClientIdAndSecret: client id and secret authentication mode (optional; default true)
 	ClientIdAndSecret *bool
 	// OneOffToken: one-off token authentication mode (optional; default false)

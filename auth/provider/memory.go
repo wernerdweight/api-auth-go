@@ -25,6 +25,12 @@ func (p MemoryApiClientProvider) ProvideByApiKey(apiKey string) (contract.ApiCli
 		if client.ApiKey == apiKey {
 			return &client, nil
 		}
+		for _, key := range client.AdditionalKeys {
+			if key.Key == apiKey {
+				client.CurrentApiKey = &key
+				return &client, nil
+			}
+		}
 	}
 
 	return nil, contract.NewAuthError(contract.ClientNotFound, nil)

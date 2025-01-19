@@ -8,13 +8,15 @@ import (
 
 // GormApiClient is a struct that implements ApiClientInterface for GORM
 type GormApiClient struct {
-	ID           uuid.UUID             `gorm:"primaryKey;type:uuid;default:uuid_generate_v4()" json:"id" groups:"internal,public,id"`
-	ClientId     string                `json:"clientId" groups:"internal,credentials"`
-	ClientSecret string                `json:"clientSecret" groups:"internal,credentials"`
-	ApiKey       string                `json:"apiKey" groups:"internal,credentials"`
-	AccessScope  *contract.AccessScope `gorm:"type:jsonb;serializer:json" json:"clientScope" groups:"internal,public"`
-	FUPScope     *contract.FUPScope    `gorm:"type:jsonb;serializer:json" json:"fupConfig" groups:"internal"`
-	CreatedAt    time.Time             `gorm:"not null;default:CURRENT_TIMESTAMP" json:"createdAt" groups:"internal"`
+	ID             uuid.UUID             `gorm:"primaryKey;type:uuid;default:uuid_generate_v4()" json:"id" groups:"internal,public,id"`
+	ClientId       string                `json:"clientId" groups:"internal,credentials"`
+	ClientSecret   string                `json:"clientSecret" groups:"internal,credentials"`
+	ApiKey         string                `json:"apiKey" groups:"internal,credentials"`
+	AdditionalKeys []GormApiClientKey    `gorm:"foreignKey:ApiClientID" json:"-"`
+	CurrentKey     *GormApiClientKey     `gorm:"-" json:"currentKey" groups:"internal,credentials"`
+	AccessScope    *contract.AccessScope `gorm:"type:jsonb;serializer:json" json:"clientScope" groups:"internal,public"`
+	FUPScope       *contract.FUPScope    `gorm:"type:jsonb;serializer:json" json:"fupConfig" groups:"internal"`
+	CreatedAt      time.Time             `gorm:"not null;default:CURRENT_TIMESTAMP" json:"createdAt" groups:"internal"`
 }
 
 func (c *GormApiClient) TableName() string {
@@ -33,12 +35,73 @@ func (c *GormApiClient) GetApiKey() string {
 	return c.ApiKey
 }
 
+func (c *GormApiClient) GetCurrentApiKey() contract.ApiClientKeyInterface {
+	if c.CurrentKey != nil {
+		return c.CurrentKey
+	}
+	return nil
+}
+
+func (c *GormApiClient) SetCurrentApiKey(key contract.ApiClientKeyInterface) {
+	currentKey := &GormApiClientKey{
+		Key:            key.GetKey(),
+		ExpirationDate: key.GetExpirationDate(),
+		AccessScope:    key.GetClientScope(),
+		FUPScope:       key.GetFUPScope(),
+	}
+	c.CurrentKey = currentKey
+	c.AccessScope = key.GetClientScope()
+	c.FUPScope = key.GetFUPScope()
+}
+
 func (c *GormApiClient) GetClientScope() *contract.AccessScope {
+	if c.GetCurrentApiKey() != nil {
+		return c.GetCurrentApiKey().GetClientScope()
+	}
 	return c.AccessScope
 }
 
 func (c *GormApiClient) GetFUPScope() *contract.FUPScope {
+	if c.GetCurrentApiKey() != nil {
+		return c.GetCurrentApiKey().GetFUPScope()
+	}
 	return c.FUPScope
+}
+
+// GormApiClientKey is a struct that implements ApiClientKeyInterface for GORM
+type GormApiClientKey struct {
+	ID             uuid.UUID             `gorm:"primaryKey;type:uuid;default:uuid_generate_v4()" json:"id" groups:"internal,public,id"`
+	Key            string                `json:"key" groups:"internal,credentials"`
+	ExpirationDate *time.Time            `json:"expirationDate" groups:"internal,public"`
+	ApiClient      *GormApiClient        `json:"-"`
+	ApiClientID    uuid.UUID             `json:"apiClientId" groups:"internal"`
+	CreatedAt      time.Time             `gorm:"not null;default:CURRENT_TIMESTAMP" json:"createdAt" groups:"internal"`
+	AccessScope    *contract.AccessScope `gorm:"type:jsonb;serializer:json" json:"clientScope" groups:"internal,public"`
+	FUPScope       *contract.FUPScope    `gorm:"type:jsonb;serializer:json" json:"fupConfig" groups:"internal"`
+}
+
+func (k *GormApiClientKey) TableName() string {
+	return "api_client_key"
+}
+
+func (k *GormApiClientKey) GetKey() string {
+	return k.Key
+}
+
+func (k *GormApiClientKey) GetClientScope() *contract.AccessScope {
+	return k.AccessScope
+}
+
+func (k *GormApiClientKey) GetFUPScope() *contract.FUPScope {
+	return k.FUPScope
+}
+
+func (k *GormApiClientKey) GetApiClient() contract.ApiClientInterface {
+	return k.ApiClient
+}
+
+func (k *GormApiClientKey) GetExpirationDate() *time.Time {
+	return k.ExpirationDate
 }
 
 // GormApiUser is a struct that implements ApiUserInterface for GORM

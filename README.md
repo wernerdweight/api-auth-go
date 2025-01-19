@@ -65,6 +65,8 @@ Full configuration structure (only client configuration is mandatory, default va
     Mode *{
         // ApiKey: api key authentication mode (optional; default false)
         ApiKey *bool
+        // AdditionalApiKeys: enable additional api keys (different scopes, FUP, expiration; optional; default false)
+        AdditionalApiKeys *bool
         // ClientIdAndSecret: client id and secret authentication mode (optional; default true)
         ClientIdAndSecret *bool
         // OneOffToken: one-off token authentication mode (optional; default false)
@@ -133,6 +135,8 @@ type ApiClientInterface interface {
     GetClientId() string
     GetClientSecret() string
     GetApiKey() string
+    GetCurrentApiKey() ApiClientKeyInterface
+    SetCurrentApiKey(apiClientKey ApiClientKeyInterface)
     GetClientScope() *AccessScope
     GetFUPScope() *FUPScope
 }
@@ -286,6 +290,47 @@ Authorization: your-api-key
 Host: your-api-host.com
 ```
 
+#### Additional API keys:
+
+You can enable additional API keys by setting `Mode.AdditionalApiKeys` to `true`. Each client can have multiple API keys with different scopes, FUP limits, and expiration dates.
+
+```go
+package main
+
+import "github.com/wernerdweight/api-auth-go/auth/contract"
+
+useApiKeyMode := true
+useAdditionalApiKeys := true
+
+contract.Config{
+    Client: contract.ClientConfig{
+        Provider: provider.NewMemoryApiClientProvider(...),
+    },
+    Mode: &contract.ModeConfig{
+        ApiKey: &useApiKeyMode,
+        AdditionalApiKeys: &useAdditionalApiKeys,
+    },
+}
+```
+
+You also need to implement `ApiClientKeyInterface`:
+
+```go
+type ApiClientKeyInterface interface {
+    GetKey() string
+    GetClientScope() *AccessScope
+    GetFUPScope() *FUPScope
+    GetApiClient() ApiClientInterface
+    GetExpirationDate() *time.Time
+}
+
+// if you want to use GORM as data provider, you can extend this type
+type ApiClientKey struct {
+    entity.GormApiClientKey
+    // TODO: your other fields here
+}
+```
+
 ### One-off token authentication mode:
 
 You can enable one-off token authentication mode by setting `Mode.OneOffToken` to `true`.
@@ -335,7 +380,7 @@ The authenticate ApiClient will have the same scope (if scoped access model is e
 
 ### Using GORM as data provider:
 
-The implementation of GORM data provider is included in this package. You can use it by providing your own implementation of `ApiClient`, `ApiUser` and `ApiUserToken` types (see above), and then providing a function that returns a GORM connection (see below).
+The implementation of GORM data provider is included in this package. You can use it by providing your own implementation of `ApiClient`, `ApiClientKey`, `ApiUser` and `ApiUserToken` types (see above), and then providing a function that returns a GORM connection (see below).
 
 ```go
 package main
@@ -347,10 +392,11 @@ import (
 
 getDBConnection := func() *gorm.DB { /* TODO: your implementation */ }
 newApiClient := func() contract.ApiClientInterface { return &YoutApiClienImplementation{} }
+newApiClientKey := func() contract.ApiClientKeyInterface { return &YoutApiClientKeyImplementation{} }
 
 contract.Config{
     Client: contract.ClientConfig{
-        Provider: provider.NewGormApiClientProvider(newApiClient, getDBConnection),
+        Provider: provider.NewGormApiClientProvider(newApiClient, newApiClientKey, getDBConnection),
     },
 }
 ```
@@ -790,6 +836,11 @@ type ApiClient struct {
 	DeletedAt gorm.DeletedAt `json:"-"`
 }
 
+type ApiClientKey struct {
+	entity.GormApiClientKey
+	DeletedAt gorm.DeletedAt `json:"-"`
+}
+
 type ApiUser struct {
 	entity.GormApiUser
 	DeletedAt gorm.DeletedAt `json:"-"`
@@ -819,15 +870,17 @@ func main() {
 	useUserScopeAccessModel := true
 	withRegistration := true
 	useApiKeyMode := true
+	useAdditionalApiKeys := true
 	redisDsn, _ := getenv.GetEnv("REDIS_URL") // e.g. redis://localhost:6379/0
 	getDBConnection := func() *gorm.DB { return db.GetConnection() }
 	newApiClient := func() contract.ApiClientInterface { return &ApiClient{} }
+	newApiClientKey := func() contract.ApiClientKeyInterface { return &model.ApiClientKey{} }
 	newApiUser := func() contract.ApiUserInterface { return &ApiUser{} }
 	newApiUserToken := func() contract.ApiUserTokenInterface { return &ApiUserToken{} }
 
 	r.Use(auth.Middleware(r, contract.Config{
 		Client: contract.ClientConfig{
-			Provider: provider.NewGormApiClientProvider(newApiClient, getDBConnection),
+			Provider: provider.NewGormApiClientProvider(newApiClient, newApiClientKey, getDBConnection),
 			UseScopeAccessModel: &useClientScopeAccessModel,
 			FUPChecker:          fup.PathAndMethodFUPChecker{},
 		},
@@ -848,6 +901,7 @@ func main() {
 		},
 		Mode: &contract.ModesConfig{
 			ApiKey: &useApiKeyMode,
+			AdditionalApiKeys: &useAdditionalApiKeys,
 		},
 	}))
 
@@ -896,6 +950,7 @@ func Migrate() error {
 	}
 	return connection.AutoMigrate(
 		&model.ApiClient{},
+		&model.ApiClientKey{},
 		&model.ApiUser{},
 		&model.ApiUserToken{},
 	)
@@ -1070,6 +1125,7 @@ var AuthErrorCodes = map[AuthErrorCode]string{
     MarshallingError:          "marshalling error",
     FUPCacheDisabled:          "cache driver needs to be configured for the FUP checker to work",
     RequestLimitDepleted:      "request limit depleted",
+    ApiKeyExpired:             "API key expired",
 }
 ```
 
