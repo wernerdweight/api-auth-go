@@ -2,8 +2,8 @@ package fup
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/wernerdweight/api-auth-go/auth/constants"
-	"github.com/wernerdweight/api-auth-go/auth/contract"
+	"github.com/wernerdweight/api-auth-go/v2/auth/constants"
+	"github.com/wernerdweight/api-auth-go/v2/auth/contract"
 	"strings"
 )
 

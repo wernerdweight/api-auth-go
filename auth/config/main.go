@@ -1,8 +1,8 @@
 package config
 
 import (
-	"github.com/wernerdweight/api-auth-go/auth/checker"
-	"github.com/wernerdweight/api-auth-go/auth/contract"
+	"github.com/wernerdweight/api-auth-go/v2/auth/checker"
+	"github.com/wernerdweight/api-auth-go/v2/auth/contract"
 	"time"
 )
 

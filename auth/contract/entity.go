@@ -1,7 +1,7 @@
 package contract
 
 import (
-	"github.com/wernerdweight/api-auth-go/auth/constants"
+	"github.com/wernerdweight/api-auth-go/v2/auth/constants"
 	"regexp"
 	"strings"
 	"time"

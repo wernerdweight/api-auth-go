@@ -2,7 +2,7 @@ package contract
 
 import (
 	"encoding/json"
-	"github.com/wernerdweight/api-auth-go/auth/constants"
+	"github.com/wernerdweight/api-auth-go/v2/auth/constants"
 	"log"
 	"time"
 )

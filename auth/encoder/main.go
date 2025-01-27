@@ -2,7 +2,7 @@ package encoder
 
 import (
 	"github.com/alexedwards/argon2id"
-	"github.com/wernerdweight/api-auth-go/auth/contract"
+	"github.com/wernerdweight/api-auth-go/v2/auth/contract"
 	"golang.org/x/crypto/bcrypt"
 )
 

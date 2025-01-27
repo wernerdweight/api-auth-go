@@ -3,9 +3,9 @@ package config
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
-	"github.com/wernerdweight/api-auth-go/auth/cache"
-	"github.com/wernerdweight/api-auth-go/auth/checker"
-	"github.com/wernerdweight/api-auth-go/auth/contract"
+	"github.com/wernerdweight/api-auth-go/v2/auth/cache"
+	"github.com/wernerdweight/api-auth-go/v2/auth/checker"
+	"github.com/wernerdweight/api-auth-go/v2/auth/contract"
 	"testing"
 	"time"
 )

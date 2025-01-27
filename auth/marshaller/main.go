@@ -2,7 +2,7 @@ package marshaller
 
 import (
 	"github.com/liip/sheriff"
-	"github.com/wernerdweight/api-auth-go/auth/contract"
+	"github.com/wernerdweight/api-auth-go/v2/auth/contract"
 )
 
 func Marshal(v interface{}, groups []string) (interface{}, *contract.AuthError) {

@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/redis/go-redis/v9"
-	"github.com/wernerdweight/api-auth-go/auth/constants"
-	"github.com/wernerdweight/api-auth-go/auth/contract"
-	"github.com/wernerdweight/api-auth-go/auth/marshaller"
+	"github.com/wernerdweight/api-auth-go/v2/auth/constants"
+	"github.com/wernerdweight/api-auth-go/v2/auth/contract"
+	"github.com/wernerdweight/api-auth-go/v2/auth/marshaller"
 	"time"
 )
 

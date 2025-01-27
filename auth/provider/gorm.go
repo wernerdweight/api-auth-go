@@ -2,11 +2,11 @@ package provider
 
 import (
 	"errors"
-	"github.com/wernerdweight/api-auth-go/auth/config"
-	"github.com/wernerdweight/api-auth-go/auth/constants"
-	"github.com/wernerdweight/api-auth-go/auth/contract"
-	"github.com/wernerdweight/api-auth-go/auth/encoder"
-	"github.com/wernerdweight/api-auth-go/auth/entity"
+	"github.com/wernerdweight/api-auth-go/v2/auth/config"
+	"github.com/wernerdweight/api-auth-go/v2/auth/constants"
+	"github.com/wernerdweight/api-auth-go/v2/auth/contract"
+	"github.com/wernerdweight/api-auth-go/v2/auth/encoder"
+	"github.com/wernerdweight/api-auth-go/v2/auth/entity"
 	generator "github.com/wernerdweight/token-generator-go"
 	"gorm.io/gorm"
 	"time"

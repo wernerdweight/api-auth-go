@@ -1,7 +1,7 @@
 package entity
 
 import (
-	"github.com/wernerdweight/api-auth-go/auth/contract"
+	"github.com/wernerdweight/api-auth-go/v2/auth/contract"
 	"time"
 )
 

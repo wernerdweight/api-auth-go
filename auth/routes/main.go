@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/wernerdweight/api-auth-go/auth/config"
+	"github.com/wernerdweight/api-auth-go/v2/auth/config"
 )
 
 func Register(r *gin.Engine) {

@@ -2,10 +2,10 @@ package auth
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/wernerdweight/api-auth-go/auth/config"
-	"github.com/wernerdweight/api-auth-go/auth/contract"
-	"github.com/wernerdweight/api-auth-go/auth/routes"
-	"github.com/wernerdweight/api-auth-go/auth/security"
+	"github.com/wernerdweight/api-auth-go/v2/auth/config"
+	"github.com/wernerdweight/api-auth-go/v2/auth/contract"
+	"github.com/wernerdweight/api-auth-go/v2/auth/routes"
+	"github.com/wernerdweight/api-auth-go/v2/auth/security"
 	"github.com/wernerdweight/events-go"
 	"log"
 	"net/http"
