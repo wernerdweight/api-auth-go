@@ -185,6 +185,15 @@ func resettingResetHandler(c *gin.Context) {
 		return
 	}
 
+	authErr = provider.InvalidateTokens(apiUser)
+	if nil != authErr {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"code":    authErr.Code,
+			"message": authErr.Err.Error(),
+			"payload": authErr.Payload,
+		})
+		return
+	}
 	authErr = provider.Save(apiUser)
 	if nil != authErr {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{

@@ -207,6 +207,10 @@ func (u *GormApiUser) GetFUPScope() *contract.FUPScope {
 	return u.FUPScope
 }
 
+func (u *GormApiUser) GetID() string {
+	return u.ID.String()
+}
+
 // GormApiUserToken is a struct that implements ApiUserTokenInterface for GORM
 type GormApiUserToken struct {
 	ID             uuid.UUID    `gorm:"primaryKey;type:uuid;default:uuid_generate_v4()" json:"id" groups:"internal"`

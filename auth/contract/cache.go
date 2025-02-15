@@ -15,4 +15,5 @@ type CacheDriverInterface interface {
 	SetApiUserByToken(token string, user ApiUserInterface) *AuthError
 	GetFUPEntry(key string) (*FUPCacheEntry, *AuthError)
 	SetFUPEntry(key string, entry *FUPCacheEntry) *AuthError
+	InvalidateToken(token string) *AuthError
 }

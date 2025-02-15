@@ -111,6 +111,15 @@ func (p MemoryApiUserProvider) ProvideNew(login string, encryptedPassword string
 	}
 }
 
+func (p MemoryApiUserProvider) InvalidateTokens(user contract.ApiUserInterface) *contract.AuthError {
+	for index, memoryUser := range p.memory {
+		if memoryUser.Login == user.GetLogin() {
+			p.memory = append(p.memory[:index], p.memory[index+1:]...)
+		}
+	}
+	return nil
+}
+
 func (p MemoryApiUserProvider) Save(client contract.ApiUserInterface) *contract.AuthError {
 	// no-op (saved in memory)
 	return nil

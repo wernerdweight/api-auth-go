@@ -233,6 +233,7 @@ type ApiUserInterface interface {
 	GetResetToken() *string
 	SetResetToken(resetToken *string)
 	GetFUPScope() *FUPScope
+	GetID() string
 }
 type ApiUserTokenInterface interface {
 	SetToken(token string)

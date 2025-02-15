@@ -72,6 +72,10 @@ func (m mockApiUser) GetFUPScope() *contract.FUPScope {
 	return nil
 }
 
+func (m mockApiUser) GetID() string {
+	return ""
+}
+
 func TestEncoder_ComparePassword(t *testing.T) {
 	assertion := assert.New(t)
 	type args struct {

@@ -50,6 +50,10 @@ func (m mockApiUserProvider) ProvideNew(login string, encryptedPassword string) 
 	return nil
 }
 
+func (m mockApiUserProvider) InvalidateTokens(user contract.ApiUserInterface) *contract.AuthError {
+	return nil
+}
+
 func (m mockApiUserProvider) Save(user contract.ApiUserInterface) *contract.AuthError {
 	return nil
 }

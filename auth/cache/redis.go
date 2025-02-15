@@ -222,6 +222,15 @@ func (d *RedisCacheDriver) SetFUPEntry(key string, entry *contract.FUPCacheEntry
 	return nil
 }
 
+func (d *RedisCacheDriver) InvalidateToken(token string) *contract.AuthError {
+	key := d.getPrefix(GroupTypeAuth) + token
+	err := d.getClient().Del(context.Background(), key).Err()
+	if nil != err {
+		return contract.NewInternalError(contract.CacheError, map[string]string{"details": err.Error()})
+	}
+	return nil
+}
+
 func NewRedisCacheDriver(dsn string, newApiClient func() contract.ApiClientInterface, newApiUser func() contract.ApiUserInterface) *RedisCacheDriver {
 	return &RedisCacheDriver{
 		dsn:          dsn,

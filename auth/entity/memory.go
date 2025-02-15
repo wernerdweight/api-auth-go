@@ -177,6 +177,10 @@ func (u *MemoryApiUser) GetFUPScope() *contract.FUPScope {
 	return u.FUPScope
 }
 
+func (u *MemoryApiUser) GetID() string {
+	return u.Id
+}
+
 // MemoryApiUserToken is the simplest struct that implements ApiUserTokenInterface
 type MemoryApiUserToken struct {
 	Token          string         `json:"token" groups:"internal,public"`

@@ -140,6 +140,12 @@ func (d *MemoryCacheDriver) SetFUPEntry(key string, entry *contract.FUPCacheEntr
 	return nil
 }
 
+func (d *MemoryCacheDriver) InvalidateToken(token string) *contract.AuthError {
+	key := d.getPrefix(GroupTypeAuth) + token
+	delete(d.apiUserMemory, key)
+	return nil
+}
+
 func NewMemoryCacheDriver() *MemoryCacheDriver {
 	return &MemoryCacheDriver{
 		apiClientMemory: make(map[string]MemoryCacheEntry[contract.ApiClientInterface]),

@@ -2,6 +2,7 @@ package provider
 
 import (
 	"errors"
+	"github.com/google/uuid"
 	"github.com/wernerdweight/api-auth-go/v2/auth/config"
 	"github.com/wernerdweight/api-auth-go/v2/auth/constants"
 	"github.com/wernerdweight/api-auth-go/v2/auth/contract"
@@ -9,6 +10,7 @@ import (
 	"github.com/wernerdweight/api-auth-go/v2/auth/entity"
 	generator "github.com/wernerdweight/token-generator-go"
 	"gorm.io/gorm"
+	"log/slog"
 	"time"
 )
 
@@ -216,6 +218,42 @@ func (p GormApiUserProvider) ProvideNew(login string, encryptedPassword string) 
 	apiUser.SetConfirmationToken(&token)
 	apiUser.SetConfirmationRequestedAt(&now)
 	return apiUser
+}
+
+func (p GormApiUserProvider) InvalidateTokens(user contract.ApiUserInterface) *contract.AuthError {
+	slog.Debug("invalidating tokens for user", slog.String("user", user.GetLogin()))
+	conn := p.getConnection()
+	id, err := uuid.Parse(user.GetID())
+	if nil != err {
+		return contract.NewInternalError(contract.DatabaseError, map[string]string{"details": err.Error()})
+	}
+	var tokens []entity.GormApiUserToken
+	result := conn.Where(&entity.GormApiUserToken{ApiUserID: id}).Where("expiration_date >= ?", time.Now()).Find(&tokens)
+	if nil != result.Error {
+		return contract.NewInternalError(contract.DatabaseError, map[string]string{"details": result.Error.Error()})
+	}
+	if 0 == len(tokens) {
+		slog.Debug("no tokens to invalidate for user", slog.String("user", user.GetLogin()))
+		return nil
+	}
+	slog.Debug("tokens to invalidate for user", slog.Int("tokens", len(tokens)), slog.String("user", user.GetLogin()))
+	for index, token := range tokens {
+		tokens[index].SetExpirationDate(time.Now())
+		slog.Debug("invalidating token", slog.String("token", token.Token))
+		if config.ProviderInstance.IsCacheEnabled() {
+			cacheErr := config.ProviderInstance.GetCacheDriver().InvalidateToken(token.Token)
+			if nil != cacheErr {
+				slog.Error("can't invalidate token in cache", slog.String("token", token.Token), slog.String("user", user.GetLogin()), slog.String("error", cacheErr.Err.Error()))
+			}
+		}
+	}
+	slog.Debug("saving invalidated tokens for user", slog.String("user", user.GetLogin()), slog.Int("tokens", len(tokens)))
+	result = conn.Save(&tokens)
+	if nil != result.Error {
+		return contract.NewInternalError(contract.DatabaseError, map[string]string{"details": result.Error.Error()})
+	}
+	slog.Debug("tokens invalidated")
+	return nil
 }
 
 func (p GormApiUserProvider) Save(user contract.ApiUserInterface) *contract.AuthError {
