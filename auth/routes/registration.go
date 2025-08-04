@@ -208,6 +208,6 @@ func registrationConfirmHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"status":  "ok",
 		"user_id": apiUser.GetID(),
-		"email":   apiUser.GetLogin(),
+		"login":   apiUser.GetLogin(),
 	})
 }
