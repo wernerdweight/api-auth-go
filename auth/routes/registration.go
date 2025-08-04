@@ -1,14 +1,15 @@
 package routes
 
 import (
+	"net/http"
+	"regexp"
+
 	"github.com/gin-gonic/gin"
 	"github.com/wernerdweight/api-auth-go/v2/auth/config"
 	"github.com/wernerdweight/api-auth-go/v2/auth/constants"
 	"github.com/wernerdweight/api-auth-go/v2/auth/contract"
 	"github.com/wernerdweight/api-auth-go/v2/auth/encoder"
 	"github.com/wernerdweight/events-go"
-	"net/http"
-	"regexp"
 )
 
 type RegistrationRequest struct {
@@ -205,6 +206,8 @@ func registrationConfirmHandler(c *gin.Context) {
 	})
 
 	c.JSON(http.StatusOK, gin.H{
-		"status": "ok",
+		"status":  "ok",
+		"user_id": apiUser.GetID(),
+		"login":   apiUser.GetLogin(),
 	})
 }
