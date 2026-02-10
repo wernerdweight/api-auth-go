@@ -5,6 +5,9 @@ import (
 	"github.com/wernerdweight/api-auth-go/v2/auth/config"
 )
 
+// Register adds auth routes (/authenticate, /registration/*, /resetting/*, /token/generate)
+// to the engine. Must be called after r.Use(auth.Middleware(...)) so the auth middleware
+// applies to these routes.
 func Register(r *gin.Engine) {
 	r.POST("/authenticate", authenticateHandler)
 	if config.ProviderInstance.IsUserRegistrationEnabled() {

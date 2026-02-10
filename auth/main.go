@@ -4,21 +4,21 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/wernerdweight/api-auth-go/v2/auth/config"
 	"github.com/wernerdweight/api-auth-go/v2/auth/contract"
-	"github.com/wernerdweight/api-auth-go/v2/auth/routes"
 	"github.com/wernerdweight/api-auth-go/v2/auth/security"
 	"github.com/wernerdweight/events-go"
 	"log"
 	"net/http"
 )
 
+// Middleware returns a gin.HandlerFunc that authenticates requests based on the provided config.
+// Auth routes (e.g. /authenticate, /registration/*) are NOT registered automatically.
+// You must call routes.Register(r) after r.Use(auth.Middleware(...)) to register them:
+//
+//	r.Use(auth.Middleware(r, cfg))
+//	routes.Register(r)
 func Middleware(r *gin.Engine, c contract.Config) gin.HandlerFunc {
 	log.Println("setting up api-auth middleware...")
 	config.ProviderInstance.Init(c)
-	defer func() {
-		// routes need to be registered asynchronously after the middleware is applied, so that is gets applied to the routes as well
-		go routes.Register(r)
-	}()
-
 	if config.ProviderInstance.IsCacheEnabled() {
 		log.Println("initializing cache driver...")
 		config.ProviderInstance.GetCacheDriver().Init(

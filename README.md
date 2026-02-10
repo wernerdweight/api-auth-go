@@ -820,6 +820,7 @@ import (
 	"github.com/wernerdweight/api-auth-go-example/pkg/db"
 	"github.com/wernerdweight/api-auth-go-example/pkg/routes"
 	"github.com/wernerdweight/api-auth-go/auth"
+	authRoutes "github.com/wernerdweight/api-auth-go/auth/routes"
 	"github.com/wernerdweight/api-auth-go/auth/cache"
 	"github.com/wernerdweight/api-auth-go/auth/contract"
 	"github.com/wernerdweight/api-auth-go/auth/entity"
@@ -904,6 +905,10 @@ func main() {
 			AdditionalApiKeys: &useAdditionalApiKeys,
 		},
 	}))
+
+	// Register auth routes (/authenticate, /registration/*, etc.) AFTER r.Use()
+	// so the auth middleware applies to them.
+	authRoutes.Register(r)
 
 	routes.RegisterRoutes(r)    // register your routes
 	
