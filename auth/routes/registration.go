@@ -146,7 +146,9 @@ func registrationRequestHandler(c *gin.Context) {
 	})
 
 	c.JSON(http.StatusCreated, gin.H{
-		"status": "ok",
+		"status":  "ok",
+		"user_id": apiUser.GetID(),
+		"login":   apiUser.GetLogin(),
 	})
 }
 
