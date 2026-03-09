@@ -211,6 +211,8 @@ func resettingResetHandler(c *gin.Context) {
 	})
 
 	c.JSON(http.StatusOK, gin.H{
-		"status": "ok",
+		"status":  "ok",
+		"user_id": apiUser.GetID(),
+		"login":   apiUser.GetLogin(),
 	})
 }
