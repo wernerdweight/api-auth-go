@@ -266,12 +266,13 @@ func Authenticate(c *gin.Context) *contract.AuthError {
 		return contract.NewAuthError(contract.ClientForbidden, nil)
 	}
 
-	if constants.ScopeAccessibilityAccessible == scopeAccessibility {
-		return nil
+	// if user credentials are provided, validate them even if not required by the client-level access scope
+	if constants.ScopeAccessibilityOnBehalf == scopeAccessibility || c.Request.Header.Get(constants.ApiUserTokenHeader) != "" {
+		return authenticateOnBehalf(c)
 	}
 
-	if constants.ScopeAccessibilityOnBehalf == scopeAccessibility {
-		return authenticateOnBehalf(c)
+	if constants.ScopeAccessibilityAccessible == scopeAccessibility {
+		return nil
 	}
 
 	return contract.NewAuthError(contract.UnknownScopeAccessibility, map[string]constants.ScopeAccessibility{"scope": scopeAccessibility})
