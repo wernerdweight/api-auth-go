@@ -14,6 +14,8 @@ type mockApiUser struct {
 
 func (m mockApiUser) AddApiToken(apiToken contract.ApiUserTokenInterface) {}
 
+func (m mockApiUser) SetCurrentToken(apiToken contract.ApiUserTokenInterface) {}
+
 func (m mockApiUser) GetCurrentToken() contract.ApiUserTokenInterface {
 	return nil
 }

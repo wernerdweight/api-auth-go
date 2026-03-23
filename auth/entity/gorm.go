@@ -135,6 +135,10 @@ func (u *GormApiUser) AddApiToken(apiToken contract.ApiUserTokenInterface) {
 	u.ApiTokens = append(u.ApiTokens, gormApiToken)
 }
 
+func (u *GormApiUser) SetCurrentToken(apiToken contract.ApiUserTokenInterface) {
+	u.CurrentToken = apiToken
+}
+
 func (u *GormApiUser) GetCurrentToken() contract.ApiUserTokenInterface {
 	return u.CurrentToken
 }
@@ -214,7 +218,7 @@ func (u *GormApiUser) GetID() string {
 // GormApiUserToken is a struct that implements ApiUserTokenInterface for GORM
 type GormApiUserToken struct {
 	ID             uuid.UUID    `gorm:"primaryKey;type:uuid;default:uuid_generate_v4()" json:"id" groups:"internal"`
-	Token          string       `json:"token" groups:"internal,public"`
+	Token          string       `json:"token" groups:"internal,credentials,public"`
 	ExpirationDate time.Time    `json:"expirationDate" groups:"internal,public"`
 	ApiUser        *GormApiUser `json:"-"`
 	ApiUserID      uuid.UUID    `json:"apiUserId" groups:"internal"`

@@ -161,9 +161,12 @@ func authenticateApiUser(c *gin.Context) (contract.ApiUserInterface, *contract.A
 		return nil, contract.NewAuthError(contract.UserTokenRequired, nil)
 	}
 	apiToken := c.Request.Header.Get(constants.ApiUserTokenHeader)
+	currentToken := config.ProviderInstance.GetTokenFactory()()
+	currentToken.SetToken(apiToken)
 	if config.ProviderInstance.IsCacheEnabled() {
 		apiUser, err := config.ProviderInstance.GetCacheDriver().GetApiUserByToken(apiToken)
 		if nil != apiUser {
+			apiUser.SetCurrentToken(currentToken)
 			return apiUser, nil
 		}
 		if nil != err {
@@ -184,6 +187,8 @@ func authenticateApiUser(c *gin.Context) (contract.ApiUserInterface, *contract.A
 			log.Printf("can't set api user to cache: %v", err)
 		}
 	}
+	// current token must not be serialized in cache (interface cannot be unmarshalled), so set it to the user after retrieving from cache or provider
+	apiUser.SetCurrentToken(currentToken)
 	return apiUser, nil
 }
 

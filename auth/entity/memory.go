@@ -102,6 +102,13 @@ func (u *MemoryApiUser) AddApiToken(apiToken contract.ApiUserTokenInterface) {
 	u.CurrentToken = &memoryApiToken
 }
 
+func (u *MemoryApiUser) SetCurrentToken(apiToken contract.ApiUserTokenInterface) {
+	u.CurrentToken = &MemoryApiUserToken{
+		Token:          apiToken.GetToken(),
+		ExpirationDate: apiToken.GetExpirationDate(),
+	}
+}
+
 func (u *MemoryApiUser) GetCurrentToken() contract.ApiUserTokenInterface {
 	return u.CurrentToken
 }
@@ -183,7 +190,7 @@ func (u *MemoryApiUser) GetID() string {
 
 // MemoryApiUserToken is the simplest struct that implements ApiUserTokenInterface
 type MemoryApiUserToken struct {
-	Token          string         `json:"token" groups:"internal,public"`
+	Token          string         `json:"token" groups:"internal,credentials,public"`
 	ExpirationDate time.Time      `json:"expirationDate" groups:"internal,public"`
 	ApiUser        *MemoryApiUser `json:"-"`
 }
