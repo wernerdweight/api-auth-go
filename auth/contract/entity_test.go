@@ -3,6 +3,7 @@ package contract
 import (
 	"github.com/wernerdweight/api-auth-go/v2/auth/constants"
 	"regexp"
+	"sync"
 	"testing"
 )
 
@@ -443,15 +444,51 @@ func TestGetCompiledScopeRegex_CachesAndHandlesInvalid(t *testing.T) {
 	if got := getCompiledScopeRegex(invalidPattern); got != nil {
 		t.Errorf("getCompiledScopeRegex(%q) second call = %v, want nil (cached)", invalidPattern, got)
 	}
-	// The invalid entry should be present in the cache as a nil value.
-	if cached, ok := regexCache.Load(invalidPattern); !ok {
-		t.Errorf("invalid pattern was not cached")
-	} else if cached != nil {
-		// We explicitly store a typed nil, which survives as an interface
-		// holding (*regexp.Regexp)(nil); it is not == nil in a generic sense,
-		// but the value read out of it must itself be a nil pointer.
-		if rp, ok := cached.(*regexp.Regexp); !ok || rp != nil {
-			t.Errorf("invalid pattern cache entry = %#v, want typed nil *regexp.Regexp", cached)
+	// The invalid entry should be present in the cache as a cachedScopeRegex
+	// whose compiled regex is nil.
+	cached, ok := regexCache.Load(invalidPattern)
+	if !ok {
+		t.Fatalf("invalid pattern was not cached")
+	}
+	entry, ok := cached.(*cachedScopeRegex)
+	if !ok {
+		t.Fatalf("invalid pattern cache entry = %#v, want *cachedScopeRegex", cached)
+	}
+	if entry.re != nil {
+		t.Errorf("invalid pattern cache entry has non-nil compiled regex: %#v", entry.re)
+	}
+}
+
+func TestGetCompiledScopeRegex_ConcurrentCompilesOnce(t *testing.T) {
+	// Hammer the cache with many goroutines requesting the same fresh
+	// pattern; they must all see the same *regexp.Regexp pointer, and the
+	// cache entry must only exist once.
+	pattern := "^/concurrent-test/[0-9]+/item$"
+	defer regexCache.Delete(pattern)
+
+	const goroutines = 64
+	results := make([]*regexp.Regexp, goroutines)
+	start := make(chan struct{})
+	var wg sync.WaitGroup
+	wg.Add(goroutines)
+	for i := 0; i < goroutines; i++ {
+		i := i
+		go func() {
+			defer wg.Done()
+			<-start
+			results[i] = getCompiledScopeRegex(pattern)
+		}()
+	}
+	close(start)
+	wg.Wait()
+
+	first := results[0]
+	if first == nil {
+		t.Fatalf("getCompiledScopeRegex returned nil for a valid pattern")
+	}
+	for i, got := range results {
+		if got != first {
+			t.Errorf("goroutine %d got different *regexp.Regexp pointer (%p) than goroutine 0 (%p)", i, got, first)
 		}
 	}
 }
@@ -595,11 +632,13 @@ func TestFUPScope_GetLimit_HasLimit(t *testing.T) {
 			has:   false,
 		},
 		// FUPScope specificity ordering: more specific regex wins over broader one.
+		// Both patterns must match the path segment for the test to actually
+		// exercise precedence — hence the `(/.*)?$` on the broad regex.
 		{
 			name: "FUP regex ordering: specific regex wins over broad",
 			scope: FUPScope{
-				"r#^/api/v[0-9]+$":          map[string]any{"hourly": 321},
-				"r#^/api/v[0-9]+/premium$":  map[string]any{"hourly": 123},
+				"r#^/api/v[0-9]+(/.*)?$":   map[string]any{"hourly": 321},
+				"r#^/api/v[0-9]+/premium$": map[string]any{"hourly": 123},
 			},
 			args: args{path: "/api/v1/premium.hourly"},
 			want: &testValue,
@@ -608,7 +647,7 @@ func TestFUPScope_GetLimit_HasLimit(t *testing.T) {
 		{
 			name: "FUP regex ordering: broad regex used when specific does not match",
 			scope: FUPScope{
-				"r#^/api/v[0-9]+$":         map[string]any{"hourly": 123},
+				"r#^/api/v[0-9]+(/.*)?$":   map[string]any{"hourly": 123},
 				"r#^/api/v[0-9]+/premium$": map[string]any{"hourly": 321},
 			},
 			args: args{path: "/api/v1.hourly"},

@@ -14,29 +14,33 @@ import (
 // before compilation.
 const regexScopePrefix = "r#"
 
+// cachedScopeRegex holds a compiled regex behind a sync.Once so that
+// concurrent lookups of the same pattern compile it exactly once, even under
+// contention. A nil re means the pattern failed to compile.
+type cachedScopeRegex struct {
+	once sync.Once
+	re   *regexp.Regexp
+}
+
 // regexCache memoizes compiled regex patterns so that access-scope checking
 // does not recompile the same regex on every request. Patterns that fail to
-// compile are stored as a nil *regexp.Regexp so that we only log/attempt
-// compilation once.
-var regexCache sync.Map // map[string]*regexp.Regexp
+// compile are stored as a cachedScopeRegex with a nil re, so the failure is
+// also cached.
+var regexCache sync.Map // map[string]*cachedScopeRegex
 
 // getCompiledScopeRegex returns the compiled regex for the given pattern,
 // using a process-wide cache. A nil *regexp.Regexp is returned (and cached)
-// for patterns that fail to compile.
+// for patterns that fail to compile. Concurrent callers requesting the same
+// pattern will share a single compilation.
 func getCompiledScopeRegex(pattern string) *regexp.Regexp {
-	if cached, ok := regexCache.Load(pattern); ok {
-		if cached == nil {
-			return nil
-		}
-		return cached.(*regexp.Regexp)
-	}
-	compiled, err := regexp.Compile(pattern)
-	if err != nil {
-		regexCache.Store(pattern, (*regexp.Regexp)(nil))
-		return nil
-	}
-	regexCache.Store(pattern, compiled)
-	return compiled
+	entryAny, _ := regexCache.LoadOrStore(pattern, &cachedScopeRegex{})
+	entry := entryAny.(*cachedScopeRegex)
+	entry.once.Do(func() {
+		// A compile error leaves entry.re as nil, which is the documented
+		// "invalid pattern" signal to callers.
+		entry.re, _ = regexp.Compile(pattern)
+	})
+	return entry.re
 }
 
 // sortedRegexScopeKeys returns the regex-enabled keys (those starting with
