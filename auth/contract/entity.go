@@ -1,11 +1,82 @@
 package contract
 
 import (
+	"cmp"
 	"github.com/wernerdweight/api-auth-go/v2/auth/constants"
 	"regexp"
+	"slices"
 	"strings"
+	"sync"
 	"time"
 )
+
+// regexScopePrefix marks a scope key as a regex pattern. The prefix is stripped
+// before compilation.
+const regexScopePrefix = "r#"
+
+// regexCache memoizes compiled regex patterns so that access-scope checking
+// does not recompile the same regex on every request. Patterns that fail to
+// compile are stored as a nil *regexp.Regexp so that we only log/attempt
+// compilation once.
+var regexCache sync.Map // map[string]*regexp.Regexp
+
+// getCompiledScopeRegex returns the compiled regex for the given pattern,
+// using a process-wide cache. A nil *regexp.Regexp is returned (and cached)
+// for patterns that fail to compile.
+func getCompiledScopeRegex(pattern string) *regexp.Regexp {
+	if cached, ok := regexCache.Load(pattern); ok {
+		if cached == nil {
+			return nil
+		}
+		return cached.(*regexp.Regexp)
+	}
+	compiled, err := regexp.Compile(pattern)
+	if err != nil {
+		regexCache.Store(pattern, (*regexp.Regexp)(nil))
+		return nil
+	}
+	regexCache.Store(pattern, compiled)
+	return compiled
+}
+
+// sortedRegexScopeKeys returns the regex-enabled keys (those starting with
+// regexScopePrefix) from the given map, sorted by pattern length descending so
+// that "more specific" regexes are tried first. Ties are broken
+// lexicographically to give deterministic ordering.
+func sortedRegexScopeKeys(scope map[string]any) []string {
+	var keys []string
+	for k := range scope {
+		if strings.HasPrefix(k, regexScopePrefix) {
+			keys = append(keys, k)
+		}
+	}
+	slices.SortFunc(keys, func(a, b string) int {
+		if d := len(b) - len(a); d != 0 {
+			return d
+		}
+		return cmp.Compare(a, b)
+	})
+	return keys
+}
+
+// lookupScopeEntry finds the value associated with segment in scope. Exact
+// matches always win; otherwise regex-enabled keys are tried in
+// most-specific-first order (see sortedRegexScopeKeys).
+func lookupScopeEntry(scope map[string]any, segment string) (any, bool) {
+	if value, ok := scope[segment]; ok {
+		return value, true
+	}
+	for _, scopeEntry := range sortedRegexScopeKeys(scope) {
+		re := getCompiledScopeRegex(scopeEntry[len(regexScopePrefix):])
+		if re == nil {
+			continue
+		}
+		if re.MatchString(segment) {
+			return scope[scopeEntry], true
+		}
+	}
+	return nil, false
+}
 
 type AccessScope map[string]any
 
@@ -31,48 +102,27 @@ func (s AccessScope) getBoolAccessibility(index int, pathSegments []string, type
 }
 
 func (s AccessScope) GetAccessibility(key string, hierarchySeparator string) constants.ScopeAccessibility {
-	currentScope := s
 	if hierarchySeparator == "" {
 		hierarchySeparator = "|"
 	}
 	pathSegments := strings.Split(key, hierarchySeparator)
-	index := 0
-	for _, segment := range pathSegments {
-		if value, ok := currentScope[segment]; ok {
-			if typedValue, ok := value.(AccessScope); ok {
-				currentScope = typedValue
-				index++
-				continue
-			}
-			if typedValue, ok := value.(string); ok {
-				return s.getStringAccessibility(index, pathSegments, typedValue)
-			}
-			if typedValue, ok := value.(bool); ok {
-				return s.getBoolAccessibility(index, pathSegments, typedValue)
-			}
+	currentScope := s
+	for index, segment := range pathSegments {
+		value, ok := lookupScopeEntry(currentScope, segment)
+		if !ok {
+			return constants.ScopeAccessibilityForbidden
 		}
-		for scopeEntry, value := range currentScope {
-			// regex-enabled scope keys must start with `r#`
-			if strings.Index(scopeEntry, "r#") != 0 {
-				continue
-			}
-			scopeEntryRegex, err := regexp.Compile(scopeEntry[2:])
-			if nil == err {
-				if scopeEntryRegex.MatchString(segment) {
-					if typedValue, ok := value.(AccessScope); ok {
-						currentScope = typedValue
-						index++
-						continue
-					}
-					if typedValue, ok := value.(string); ok {
-						return s.getStringAccessibility(index, pathSegments, typedValue)
-					}
-					if typedValue, ok := value.(bool); ok {
-						return s.getBoolAccessibility(index, pathSegments, typedValue)
-					}
-				}
-			}
+		if nested, ok := value.(AccessScope); ok {
+			currentScope = nested
+			continue
 		}
+		if typedValue, ok := value.(string); ok {
+			return s.getStringAccessibility(index, pathSegments, typedValue)
+		}
+		if typedValue, ok := value.(bool); ok {
+			return s.getBoolAccessibility(index, pathSegments, typedValue)
+		}
+		return constants.ScopeAccessibilityForbidden
 	}
 	return constants.ScopeAccessibilityForbidden
 }
@@ -103,91 +153,47 @@ func (s FUPScope) getFloat32Limit(index int, pathSegments []string, typedValue f
 }
 
 func (s FUPScope) GetLimit(key string) *int {
-	currentScope := s
 	pathSegments := strings.Split(key, ".")
-	index := 0
-	for _, segment := range pathSegments {
-		if value, ok := currentScope[segment]; ok {
-			if typedValue, ok := value.(map[string]any); ok {
-				currentScope = typedValue
-				index++
-				continue
-			}
-			if typedValue, ok := value.(int); ok {
-				return s.getIntLimit(index, pathSegments, typedValue)
-			}
-			if typedValue, ok := value.(float64); ok {
-				return s.getFloat64Limit(index, pathSegments, typedValue)
-			}
-			if typedValue, ok := value.(float32); ok {
-				return s.getFloat32Limit(index, pathSegments, typedValue)
-			}
+	currentScope := map[string]any(s)
+	for index, segment := range pathSegments {
+		value, ok := lookupScopeEntry(currentScope, segment)
+		if !ok {
+			return nil
 		}
-		for scopeEntry, value := range currentScope {
-			// regex-enabled scope keys must start with `r#`
-			if strings.Index(scopeEntry, "r#") != 0 {
-				continue
-			}
-			scopeEntryRegex, err := regexp.Compile(scopeEntry[2:])
-			if nil == err {
-				if scopeEntryRegex.MatchString(segment) {
-					if typedValue, ok := value.(map[string]any); ok {
-						currentScope = typedValue
-						index++
-						continue
-					}
-					if typedValue, ok := value.(int); ok {
-						return s.getIntLimit(index, pathSegments, typedValue)
-					}
-					if typedValue, ok := value.(float64); ok {
-						return s.getFloat64Limit(index, pathSegments, typedValue)
-					}
-					if typedValue, ok := value.(float32); ok {
-						return s.getFloat32Limit(index, pathSegments, typedValue)
-					}
-				}
-			}
+		if nested, ok := value.(map[string]any); ok {
+			currentScope = nested
+			continue
 		}
+		if typedValue, ok := value.(int); ok {
+			return s.getIntLimit(index, pathSegments, typedValue)
+		}
+		if typedValue, ok := value.(float64); ok {
+			return s.getFloat64Limit(index, pathSegments, typedValue)
+		}
+		if typedValue, ok := value.(float32); ok {
+			return s.getFloat32Limit(index, pathSegments, typedValue)
+		}
+		return nil
 	}
 	return nil
 }
 
 func (s FUPScope) HasLimit(key string) bool {
-	currentScope := s
 	pathSegments := strings.Split(key, ".")
-	index := 0
-	for _, segment := range pathSegments {
-		if value, ok := currentScope[segment]; ok {
-			if typedValue, ok := value.(map[string]any); ok {
-				currentScope = typedValue
-				if index == len(pathSegments)-1 {
-					return true
-				}
-				index++
-				continue
-			}
+	currentScope := map[string]any(s)
+	for index, segment := range pathSegments {
+		value, ok := lookupScopeEntry(currentScope, segment)
+		if !ok {
 			return false
 		}
-		for scopeEntry, value := range currentScope {
-			// regex-enabled scope keys must start with `r#`
-			if strings.Index(scopeEntry, "r#") != 0 {
-				continue
+		if nested, ok := value.(map[string]any); ok {
+			if index == len(pathSegments)-1 {
+				return true
 			}
-			scopeEntryRegex, err := regexp.Compile(scopeEntry[2:])
-			if nil == err {
-				if scopeEntryRegex.MatchString(segment) {
-					if typedValue, ok := value.(map[string]any); ok {
-						currentScope = typedValue
-						if index == len(pathSegments)-1 {
-							return true
-						}
-						index++
-						continue
-					}
-					return false
-				}
-			}
+			currentScope = nested
+			continue
 		}
+		return false
 	}
 	return false
 }
