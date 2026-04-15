@@ -255,9 +255,9 @@ func TestAccessScope_GetAccessibility(t *testing.T) {
 		{
 			name: "Regex ordering: three regexes, middle one wins",
 			scope: AccessScope{
-				"r#^/a/.*$":                    true,
-				"r#^/a/b/.*$":                  false,
-				"r#^/a/b/c/very/specific/.*$":  "on-behalf",
+				"r#^/a/.*$":                   true,
+				"r#^/a/b/.*$":                 false,
+				"r#^/a/b/c/very/specific/.*$": "on-behalf",
 			},
 			args: args{path: "/a/b/other"},
 			want: constants.ScopeAccessibilityForbidden,
@@ -265,9 +265,9 @@ func TestAccessScope_GetAccessibility(t *testing.T) {
 		{
 			name: "Regex ordering: three regexes, most specific wins",
 			scope: AccessScope{
-				"r#^/a/.*$":                    true,
-				"r#^/a/b/.*$":                  false,
-				"r#^/a/b/c/very/specific/.*$":  "on-behalf",
+				"r#^/a/.*$":                   true,
+				"r#^/a/b/.*$":                 false,
+				"r#^/a/b/c/very/specific/.*$": "on-behalf",
 			},
 			args: args{path: "/a/b/c/very/specific/thing"},
 			want: constants.ScopeAccessibilityOnBehalf,
@@ -275,9 +275,9 @@ func TestAccessScope_GetAccessibility(t *testing.T) {
 		{
 			name: "Regex ordering: three regexes, least specific wins when others miss",
 			scope: AccessScope{
-				"r#^/a/.*$":                    true,
-				"r#^/a/b/.*$":                  false,
-				"r#^/a/b/c/very/specific/.*$":  "on-behalf",
+				"r#^/a/.*$":                   true,
+				"r#^/a/b/.*$":                 false,
+				"r#^/a/b/c/very/specific/.*$": "on-behalf",
 			},
 			args: args{path: "/a/something"},
 			want: constants.ScopeAccessibilityAccessible,
@@ -321,8 +321,8 @@ func TestAccessScope_GetAccessibility(t *testing.T) {
 			name: "Regex ordering: nested scope with specificity at leaf level",
 			scope: AccessScope{
 				"api": AccessScope{
-					"r#^/users/.*$":         true,
-					"r#^/users/admin/.*$":   false,
+					"r#^/users/.*$":       true,
+					"r#^/users/admin/.*$": false,
 				},
 			},
 			args: args{path: "api|/users/admin/delete"},
@@ -332,8 +332,8 @@ func TestAccessScope_GetAccessibility(t *testing.T) {
 			name: "Regex ordering: nested scope with specificity at leaf level, allow case",
 			scope: AccessScope{
 				"api": AccessScope{
-					"r#^/users/.*$":         true,
-					"r#^/users/admin/.*$":   false,
+					"r#^/users/.*$":       true,
+					"r#^/users/admin/.*$": false,
 				},
 			},
 			args: args{path: "api|/users/42"},
@@ -368,9 +368,9 @@ func TestSortedRegexScopeKeys(t *testing.T) {
 		{
 			name: "Mixed keys — only regex keys are returned",
 			scope: map[string]any{
-				"/literal":     true,
-				"r#^/a/.*$":    true,
-				"another-lit":  false,
+				"/literal":      true,
+				"r#^/a/.*$":     true,
+				"another-lit":   false,
 				"r#^/longer/.$": true,
 			},
 			want: []string{"r#^/longer/.$", "r#^/a/.*$"},
@@ -378,9 +378,9 @@ func TestSortedRegexScopeKeys(t *testing.T) {
 		{
 			name: "Length-descending ordering",
 			scope: map[string]any{
-				"r#^/short$":                          true,
-				"r#^/much/much/longer/pattern/here$":  true,
-				"r#^/medium/length$":                  true,
+				"r#^/short$":                         true,
+				"r#^/much/much/longer/pattern/here$": true,
+				"r#^/medium/length$":                 true,
 			},
 			want: []string{
 				"r#^/much/much/longer/pattern/here$",
