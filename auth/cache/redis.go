@@ -7,19 +7,65 @@ import (
 	"github.com/wernerdweight/api-auth-go/v2/auth/constants"
 	"github.com/wernerdweight/api-auth-go/v2/auth/contract"
 	"github.com/wernerdweight/api-auth-go/v2/auth/marshaller"
+	"sync"
 	"time"
 )
+
+// fupIncrementScript reads, increments and writes a FUP entry in a single round trip so that
+// concurrent requests sharing a FUP key can't overwrite each other's counters.
+//
+// KEYS[1] is the entry key, ARGV[1] the current timestamp to store, ARGV[2] the entry TTL in
+// seconds, and the remaining arguments are (period, from, to) triplets - the counter of a period
+// is incremented if the stored timestamp falls within its bounds and reset to 1 otherwise (see
+// constants.Period.GetTimestampBounds). The stored value keeps the contract.FUPCacheEntry format.
+var fupIncrementScript = redis.NewScript(`
+local used = {}
+local updatedAt = ''
+local raw = redis.call('GET', KEYS[1])
+if raw then
+	local decoded = cjson.decode(raw)
+	if type(decoded) == 'table' then
+		if type(decoded['updatedAt']) == 'string' then
+			updatedAt = decoded['updatedAt']
+		end
+		if type(decoded['used']) == 'table' then
+			used = decoded['used']
+		end
+	end
+end
+for i = 3, #ARGV, 3 do
+	local period = ARGV[i]
+	local from = ARGV[i + 1]
+	local to = ARGV[i + 2]
+	local current = string.sub(updatedAt, 1, string.len(from))
+	local previous = tonumber(used[period])
+	if previous ~= nil and current >= from and current <= to then
+		used[period] = previous + 1
+	else
+		used[period] = 1
+	end
+end
+local entry = cjson.encode({ updatedAt = ARGV[1], used = used })
+redis.call('SET', KEYS[1], entry, 'EX', ARGV[2])
+return entry
+`)
 
 type RedisCacheDriver struct {
 	dsn          string
 	client       *redis.Client
+	clientLock   sync.Mutex
 	prefix       string
 	ttl          time.Duration
 	newApiClient func() contract.ApiClientInterface
 	newApiUser   func() contract.ApiUserInterface
 }
 
+// getClient initializes the client on first use. It is called from concurrently handled requests,
+// so the initialization has to be guarded - otherwise each of them could create its own client
+// (and its own connection pool).
 func (d *RedisCacheDriver) getClient() *redis.Client {
+	d.clientLock.Lock()
+	defer d.clientLock.Unlock()
 	if d.client == nil {
 		opts, err := redis.ParseURL(d.dsn)
 		if nil != err {
@@ -215,11 +261,32 @@ func (d *RedisCacheDriver) SetFUPEntry(key string, entry *contract.FUPCacheEntry
 	if nil != err {
 		return contract.NewInternalError(contract.CacheError, map[string]string{"details": err.Error()})
 	}
-	err = d.getClient().Set(context.Background(), entryKey, value, 0).Err()
+	err = d.getClient().Set(context.Background(), entryKey, value, constants.FUPEntryTTL).Err()
 	if nil != err {
 		return contract.NewInternalError(contract.CacheError, map[string]string{"details": err.Error()})
 	}
 	return nil
+}
+
+func (d *RedisCacheDriver) IncrementFUPEntry(key string) (*contract.FUPCacheEntry, *contract.AuthError) {
+	entryKey := d.getPrefix(GroupTypeFUP) + key
+	updatedAt := time.Now()
+	args := make([]any, 0, 2+len(constants.FUPScopePeriods)*3)
+	args = append(args, updatedAt.Format(time.RFC3339Nano), int(constants.FUPEntryTTL.Seconds()))
+	for _, period := range constants.FUPScopePeriods {
+		from, to := period.GetTimestampBounds(updatedAt)
+		args = append(args, string(period), from, to)
+	}
+	value, err := fupIncrementScript.Run(context.Background(), d.getClient(), []string{entryKey}, args...).Text()
+	if nil != err {
+		return nil, contract.NewInternalError(contract.CacheError, map[string]string{"details": err.Error()})
+	}
+	entry := &contract.FUPCacheEntry{}
+	err = json.Unmarshal([]byte(value), entry)
+	if nil != err {
+		return nil, contract.NewInternalError(contract.CacheError, map[string]string{"details": err.Error()})
+	}
+	return entry, nil
 }
 
 func (d *RedisCacheDriver) InvalidateToken(token string) *contract.AuthError {

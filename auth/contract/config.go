@@ -12,6 +12,11 @@ type ClientConfig struct {
 	// FUPChecker: the checker used to check FUP limits that implements FUPCheckerInterface (optional; if you omit FUP checker, FUP limits will not be checked)
 	// NOTE: if you want to use FUP limits, you must also enable Cache (see below)
 	FUPChecker FUPCheckerInterface
+	// AnonymousFUPScope: FUP limits applied to requests that fail to authenticate (optional; if you omit the scope, unauthenticated traffic is not limited)
+	// NOTE: if you want to use anonymous FUP limits, you must also enable Cache (see below)
+	AnonymousFUPScope *FUPScope
+	// AnonymousFUPChecker: the checker used to check anonymous FUP limits that implements FUPCheckerInterface - defaults to fup.IPFUPChecker
+	AnonymousFUPChecker FUPCheckerInterface
 	// ApiTokenExpirationInterval: token expiration in seconds - defaults to 3600 (1 hour)
 	OneOffTokenExpirationInterval *time.Duration
 }

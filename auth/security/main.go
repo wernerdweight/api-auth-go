@@ -6,6 +6,7 @@ import (
 	"github.com/wernerdweight/api-auth-go/v2/auth/config"
 	"github.com/wernerdweight/api-auth-go/v2/auth/constants"
 	"github.com/wernerdweight/api-auth-go/v2/auth/contract"
+	"github.com/wernerdweight/api-auth-go/v2/auth/fup"
 	"log"
 	"regexp"
 )
@@ -156,6 +157,30 @@ func authenticateApiClient(c *gin.Context) (contract.ApiClientInterface, *contra
 	return nil, contract.NewAuthError(contract.NoCredentialsProvided, nil)
 }
 
+// checkAnonymousFUP applies the anonymous FUP limits to a request that failed to authenticate.
+// It returns a FUP error if the limits are depleted, nil if the request may continue to be
+// handled as unauthenticated.
+func checkAnonymousFUP(c *gin.Context) *contract.AuthError {
+	if !config.ProviderInstance.IsAnonymousFUPEnabled() {
+		return nil
+	}
+	anonymousFUPChecker := config.ProviderInstance.GetAnonymousFUPChecker()
+	if nil == anonymousFUPChecker {
+		anonymousFUPChecker = fup.IPFUPChecker{}
+	}
+	fupLimits := anonymousFUPChecker.Check(config.ProviderInstance.GetAnonymousFUPScope(), c, constants.AnonymousFUPKey)
+	if nil != fupLimits.Error {
+		// the authentication error is more relevant to the caller than a FUP infrastructure problem
+		log.Printf("can't check anonymous FUP limits: %v", fupLimits.Error.Err)
+		return nil
+	}
+	if fupLimits.Accessible != constants.ScopeAccessibilityForbidden {
+		return nil
+	}
+	c.Header(constants.RetryAfterHeader, fmt.Sprintf("%d", fupLimits.GetRetryAfter()))
+	return contract.NewFUPError(contract.RequestLimitDepleted, fupLimits.Limits)
+}
+
 func authenticateApiUser(c *gin.Context) (contract.ApiUserInterface, *contract.AuthError) {
 	if c.Request.Header.Get(constants.ApiUserTokenHeader) == "" {
 		return nil, contract.NewAuthError(contract.UserTokenRequired, nil)
@@ -235,6 +260,10 @@ func Authenticate(c *gin.Context) *contract.AuthError {
 
 	apiClient, err := authenticateApiClient(c)
 	if nil != err {
+		// no client could be resolved, so the request can only be limited as anonymous traffic
+		if fupErr := checkAnonymousFUP(c); nil != fupErr {
+			return fupErr
+		}
 		return err
 	}
 

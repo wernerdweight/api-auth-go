@@ -102,6 +102,18 @@ func (p *Provider) GetUserFUPChecker() contract.FUPCheckerInterface {
 	return p.config.User.FUPChecker
 }
 
+func (p *Provider) GetAnonymousFUPChecker() contract.FUPCheckerInterface {
+	return p.config.Client.AnonymousFUPChecker
+}
+
+func (p *Provider) GetAnonymousFUPScope() *contract.FUPScope {
+	return p.config.Client.AnonymousFUPScope
+}
+
+func (p *Provider) IsAnonymousFUPEnabled() bool {
+	return nil != p.config.Client.AnonymousFUPScope
+}
+
 func (p *Provider) IsClientFUPEnabled() bool {
 	return nil != p.config.Client.FUPChecker
 }
@@ -185,6 +197,12 @@ func (p *Provider) Init(config contract.Config) {
 	if nil != config.Client.FUPChecker {
 		p.config.Client.FUPChecker = config.Client.FUPChecker
 	}
+	if nil != config.Client.AnonymousFUPScope {
+		p.config.Client.AnonymousFUPScope = config.Client.AnonymousFUPScope
+	}
+	if nil != config.Client.AnonymousFUPChecker {
+		p.config.Client.AnonymousFUPChecker = config.Client.AnonymousFUPChecker
+	}
 	if nil != config.Client.OneOffTokenExpirationInterval {
 		p.config.Client.OneOffTokenExpirationInterval = config.Client.OneOffTokenExpirationInterval
 	}
@@ -241,6 +259,8 @@ var ProviderInstance = &Provider{
 			UseScopeAccessModel:           &defaultClientUseScopeAccessModel,
 			AccessScopeChecker:            checker.PathAccessScopeChecker{},
 			FUPChecker:                    nil,
+			AnonymousFUPScope:             nil,
+			AnonymousFUPChecker:           nil,
 			OneOffTokenExpirationInterval: &defaultOneOffTokenExpirationInterval,
 		},
 		User: &contract.UserConfig{

@@ -15,5 +15,9 @@ type CacheDriverInterface interface {
 	SetApiUserByToken(token string, user ApiUserInterface) *AuthError
 	GetFUPEntry(key string) (*FUPCacheEntry, *AuthError)
 	SetFUPEntry(key string, entry *FUPCacheEntry) *AuthError
+	// IncrementFUPEntry increments the counters of the given FUP entry and returns the updated entry.
+	// It must be atomic - concurrent requests sharing a FUP key would otherwise overwrite each other's
+	// counters and the limit would not be enforced.
+	IncrementFUPEntry(key string) (*FUPCacheEntry, *AuthError)
 	InvalidateToken(token string) *AuthError
 }

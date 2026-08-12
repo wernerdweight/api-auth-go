@@ -3,6 +3,7 @@ package cache
 import (
 	"github.com/wernerdweight/api-auth-go/v2/auth/constants"
 	"github.com/wernerdweight/api-auth-go/v2/auth/contract"
+	"sync"
 	"time"
 )
 
@@ -17,6 +18,7 @@ type MemoryCacheDriver struct {
 	apiClientMemory map[string]MemoryCacheEntry[contract.ApiClientInterface]
 	apiUserMemory   map[string]MemoryCacheEntry[contract.ApiUserInterface]
 	fupMemory       map[string]MemoryCacheEntry[contract.FUPCacheEntry]
+	fupLock         sync.Mutex
 	prefix          string
 	ttl             time.Duration
 }
@@ -116,10 +118,12 @@ func (d *MemoryCacheDriver) SetApiUserByToken(token string, user contract.ApiUse
 	return nil
 }
 
-func (d *MemoryCacheDriver) GetFUPEntry(key string) (*contract.FUPCacheEntry, *contract.AuthError) {
-	entryKey := d.getPrefix(GroupTypeFUP) + key
+func (d *MemoryCacheDriver) getFUPEntry(entryKey string) *contract.FUPCacheEntry {
 	if hit, ok := d.fupMemory[entryKey]; ok {
-		return &hit.Value, nil
+		if hit.ExpireAt.After(time.Now()) {
+			return &hit.Value
+		}
+		delete(d.fupMemory, entryKey)
 	}
 	return &contract.FUPCacheEntry{
 		UpdatedAt: time.Time{},
@@ -130,14 +134,37 @@ func (d *MemoryCacheDriver) GetFUPEntry(key string) (*contract.FUPCacheEntry, *c
 			constants.PeriodWeekly:   0,
 			constants.PeriodMonthly:  0,
 		},
-	}, nil
+	}
+}
+
+func (d *MemoryCacheDriver) setFUPEntry(entryKey string, entry *contract.FUPCacheEntry) {
+	d.fupMemory[entryKey] = MemoryCacheEntry[contract.FUPCacheEntry]{
+		Value:    *entry,
+		ExpireAt: time.Now().Add(constants.FUPEntryTTL),
+	}
+}
+
+func (d *MemoryCacheDriver) GetFUPEntry(key string) (*contract.FUPCacheEntry, *contract.AuthError) {
+	d.fupLock.Lock()
+	defer d.fupLock.Unlock()
+	return d.getFUPEntry(d.getPrefix(GroupTypeFUP) + key), nil
 }
 
 func (d *MemoryCacheDriver) SetFUPEntry(key string, entry *contract.FUPCacheEntry) *contract.AuthError {
-	d.fupMemory[d.getPrefix(GroupTypeFUP)+key] = MemoryCacheEntry[contract.FUPCacheEntry]{
-		Value: *entry,
-	}
+	d.fupLock.Lock()
+	defer d.fupLock.Unlock()
+	d.setFUPEntry(d.getPrefix(GroupTypeFUP)+key, entry)
 	return nil
+}
+
+func (d *MemoryCacheDriver) IncrementFUPEntry(key string) (*contract.FUPCacheEntry, *contract.AuthError) {
+	d.fupLock.Lock()
+	defer d.fupLock.Unlock()
+	entryKey := d.getPrefix(GroupTypeFUP) + key
+	entry := d.getFUPEntry(entryKey)
+	entry.Increment()
+	d.setFUPEntry(entryKey, entry)
+	return entry, nil
 }
 
 func (d *MemoryCacheDriver) InvalidateToken(token string) *contract.AuthError {
