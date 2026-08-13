@@ -95,6 +95,10 @@ func (p Period) GetResetTime() time.Time {
 //
 // This is the same comparison as GetFormatToCompare, expressed so that it can be evaluated by a
 // cache backend (which only sees the serialized timestamp) instead of in Go.
+//
+// Both the bounds and the timestamps they are compared against are expressed in the local time of
+// the application instance (as GetFormatToCompare and GetResetTime are), so instances that run in
+// different time zones and share a cache do not agree on where a period starts and ends.
 func (p Period) GetTimestampBounds(t time.Time) (string, string) {
 	switch p {
 	case PeriodMinutely:

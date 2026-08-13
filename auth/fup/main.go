@@ -2,9 +2,9 @@ package fup
 
 import (
 	"fmt"
-	"github.com/wernerdweight/api-auth-go/v2/auth/config"
-	"github.com/wernerdweight/api-auth-go/v2/auth/constants"
-	"github.com/wernerdweight/api-auth-go/v2/auth/contract"
+	"github.com/wernerdweight/api-auth-go/v3/auth/config"
+	"github.com/wernerdweight/api-auth-go/v3/auth/constants"
+	"github.com/wernerdweight/api-auth-go/v3/auth/contract"
 	"strings"
 )
 

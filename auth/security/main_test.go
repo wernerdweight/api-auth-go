@@ -7,10 +7,11 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/wernerdweight/api-auth-go/v2/auth/cache"
-	"github.com/wernerdweight/api-auth-go/v2/auth/config"
-	"github.com/wernerdweight/api-auth-go/v2/auth/constants"
-	"github.com/wernerdweight/api-auth-go/v2/auth/contract"
+	"github.com/wernerdweight/api-auth-go/v3/auth/cache"
+	"github.com/wernerdweight/api-auth-go/v3/auth/config"
+	"github.com/wernerdweight/api-auth-go/v3/auth/constants"
+	"github.com/wernerdweight/api-auth-go/v3/auth/contract"
+	"github.com/wernerdweight/api-auth-go/v3/auth/fup"
 )
 
 // unknownApiClientProvider resolves no client, like the provider does for the traffic that the
@@ -29,19 +30,47 @@ func (p unknownApiClientProvider) Save(_ contract.ApiClientInterface) *contract.
 	return nil
 }
 
+// brokenApiClientProvider fails for a reason that is not the caller's fault, e.g. an unreachable database
+type brokenApiClientProvider struct {
+	unknownApiClientProvider
+}
+
+func (p brokenApiClientProvider) ProvideByApiKey(_ string) (contract.ApiClientInterface, *contract.AuthError) {
+	return nil, contract.NewInternalError(contract.DatabaseError, nil)
+}
+
+// brokenFUPCacheDriver can't count requests, e.g. because the cache is unreachable
+type brokenFUPCacheDriver struct {
+	*cache.MemoryCacheDriver
+}
+
+func (d brokenFUPCacheDriver) IncrementFUPEntry(_ string) (*contract.FUPCacheEntry, *contract.AuthError) {
+	return nil, contract.NewInternalError(contract.CacheError, nil)
+}
+
 // initAnonymousFUP configures the provider with a fresh cache, so that each test starts with
 // empty counters
 func initAnonymousFUP(scope contract.FUPScope) {
+	memoryDriver := cache.NewMemoryCacheDriver()
+	initAnonymousFUPWith(scope, unknownApiClientProvider{}, memoryDriver)
+}
+
+func initAnonymousFUPWith(
+	scope contract.FUPScope,
+	provider contract.ApiClientProviderInterface[contract.ApiClientInterface],
+	driver contract.CacheDriverInterface,
+) {
 	useScopeAccessModel := true
 	apiKeyMode := true
 	prefix := "test:"
-	driver := cache.NewMemoryCacheDriver()
 	driver.Init(prefix, time.Hour)
 	config.ProviderInstance.Init(contract.Config{
 		Client: contract.ClientConfig{
-			Provider:            unknownApiClientProvider{},
+			Provider:            provider,
 			UseScopeAccessModel: &useScopeAccessModel,
 			AnonymousFUPScope:   &scope,
+			// auth.Middleware defaults the checker, the config provider can't (see auth.Middleware)
+			AnonymousFUPChecker: fup.IPFUPChecker{},
 		},
 		Mode:  &contract.ModesConfig{ApiKey: &apiKeyMode},
 		Cache: &contract.CacheConfig{Driver: driver, Prefix: &prefix},
@@ -52,6 +81,8 @@ func requestFrom(ip string, apiKey string) *gin.Context {
 	gin.SetMode(gin.TestMode)
 	c, _ := gin.CreateTestContext(httptest.NewRecorder())
 	c.Request = httptest.NewRequest(http.MethodGet, "/test", nil)
+	// gin trusts all proxies unless the application configures otherwise, so this is what
+	// c.ClientIP() (and with it the per-IP FUP key) resolves to
 	c.Request.Header.Set("X-Forwarded-For", ip)
 	if "" != apiKey {
 		c.Request.Header.Set(constants.ApiKeyHeader, apiKey)
@@ -125,6 +156,58 @@ func TestAuthenticate_AnonymousFUP_PerIP(t *testing.T) {
 	}
 	if err.Code != contract.NoCredentialsProvided {
 		t.Errorf("Authenticate() code = %v, want %v", err.Code, contract.NoCredentialsProvided)
+	}
+}
+
+// TestAuthenticate_AnonymousFUP_CacheError pins the fail-open behaviour: if the limits can't be
+// checked, unauthenticated requests must keep getting their authentication error - neither a 500
+// for all of them, nor a 429 that was never counted
+func TestAuthenticate_AnonymousFUP_CacheError(t *testing.T) {
+	initAnonymousFUPWith(
+		contract.FUPScope{
+			constants.FUPIPKey: map[string]any{string(constants.PeriodMinutely): 1},
+		},
+		unknownApiClientProvider{},
+		brokenFUPCacheDriver{cache.NewMemoryCacheDriver()},
+	)
+
+	for i := 0; i < 5; i++ {
+		err := Authenticate(requestFrom("10.0.0.1", ""))
+		if nil == err {
+			t.Fatalf("request %d: Authenticate() = nil, want an authentication error", i)
+		}
+		if err.Code != contract.NoCredentialsProvided {
+			t.Fatalf("request %d: Authenticate() code = %v, want %v", i, err.Code, contract.NoCredentialsProvided)
+		}
+		if err.Status != http.StatusUnauthorized {
+			t.Fatalf("request %d: Authenticate() status = %d, want %d", i, err.Status, http.StatusUnauthorized)
+		}
+	}
+}
+
+// TestAuthenticate_AnonymousFUP_InternalError makes sure requests that fail to authenticate for a
+// reason on our side are not limited - an outage would otherwise become a 429 for everyone
+func TestAuthenticate_AnonymousFUP_InternalError(t *testing.T) {
+	const limit = 2
+	initAnonymousFUPWith(
+		contract.FUPScope{
+			constants.FUPIPKey: map[string]any{string(constants.PeriodMinutely): limit},
+		},
+		brokenApiClientProvider{},
+		cache.NewMemoryCacheDriver(),
+	)
+
+	for i := 0; i <= limit+1; i++ {
+		err := Authenticate(requestFrom("10.0.0.1", "any-api-key"))
+		if nil == err {
+			t.Fatalf("request %d: Authenticate() = nil, want the provider error", i)
+		}
+		if err.Code != contract.DatabaseError {
+			t.Fatalf("request %d: Authenticate() code = %v, want %v", i, err.Code, contract.DatabaseError)
+		}
+		if err.Status != http.StatusInternalServerError {
+			t.Fatalf("request %d: Authenticate() status = %d, want %d", i, err.Status, http.StatusInternalServerError)
+		}
 	}
 }
 

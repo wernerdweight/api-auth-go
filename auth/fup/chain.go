@@ -2,8 +2,8 @@ package fup
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/wernerdweight/api-auth-go/v2/auth/constants"
-	"github.com/wernerdweight/api-auth-go/v2/auth/contract"
+	"github.com/wernerdweight/api-auth-go/v3/auth/constants"
+	"github.com/wernerdweight/api-auth-go/v3/auth/contract"
 )
 
 // ChainFUPChecker allows to chain multiple FUPCheckerInterface implementations

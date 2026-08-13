@@ -2,7 +2,7 @@ package entity
 
 import (
 	"github.com/google/uuid"
-	"github.com/wernerdweight/api-auth-go/v2/auth/contract"
+	"github.com/wernerdweight/api-auth-go/v3/auth/contract"
 	"time"
 )
 

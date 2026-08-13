@@ -15,8 +15,12 @@ Installation
 ### 1. Installation
 
 ```bash
-go get github.com/wernerdweight/api-auth-go
+go get github.com/wernerdweight/api-auth-go/v3
 ```
+
+### Upgrading from v2
+
+`CacheDriverInterface` has a new method, `IncrementFUPEntry` (see [FUP limits](#with-fup-limits)). The bundled drivers implement it; if you use a custom cache driver, you need to implement it as well, and its read-modify-write cycle has to be atomic. Nothing else changed, and no stored data needs to be migrated.
 
 Configuration and Usage
 ------------
@@ -846,6 +850,8 @@ contract.Config{
 ```
 
 Once the limits are depleted, the request is rejected with `429 Too Many Requests` (and the `Retry-After` header) instead of `401 Unauthorized`. Below the limits, requests keep failing with the authentication error they would fail with without the anonymous scope - the scope only limits how many of them a single source can make, it never grants access.
+
+Only requests that fail to authenticate because of the credentials they carry are limited. If authentication fails for a reason on the application's side (a provider that can't reach its database, an unavailable cache), the request keeps getting that error and is not counted, so an outage doesn't turn into `429` for everyone.
 
 Note that the checkers limit by client-controlled values (`c.ClientIP()` resolves to the `X-Forwarded-For` header unless you set gin's trusted proxies, cookies are sent by the client), so anonymous limits are bypassable by a caller that varies them. They are meant to keep unauthenticated bursts from reaching the rest of the application, not to serve as an authorization boundary.
 

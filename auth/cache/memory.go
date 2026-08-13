@@ -1,8 +1,8 @@
 package cache
 
 import (
-	"github.com/wernerdweight/api-auth-go/v2/auth/constants"
-	"github.com/wernerdweight/api-auth-go/v2/auth/contract"
+	"github.com/wernerdweight/api-auth-go/v3/auth/constants"
+	"github.com/wernerdweight/api-auth-go/v3/auth/contract"
 	"sync"
 	"time"
 )
@@ -118,10 +118,25 @@ func (d *MemoryCacheDriver) SetApiUserByToken(token string, user contract.ApiUse
 	return nil
 }
 
+// detachFUPEntry returns a copy of the given entry that shares no state with it. Copying the entry
+// itself is not enough - its Used map would still be the very same map. Entries cross the driver's
+// lock in both directions (they are returned to the caller and stored on its behalf), so without
+// detaching them the caller would read the map while another request increments it under the lock.
+func detachFUPEntry(entry *contract.FUPCacheEntry) *contract.FUPCacheEntry {
+	used := make(map[constants.Period]int, len(entry.Used))
+	for period, value := range entry.Used {
+		used[period] = value
+	}
+	return &contract.FUPCacheEntry{
+		UpdatedAt: entry.UpdatedAt,
+		Used:      used,
+	}
+}
+
 func (d *MemoryCacheDriver) getFUPEntry(entryKey string) *contract.FUPCacheEntry {
 	if hit, ok := d.fupMemory[entryKey]; ok {
 		if hit.ExpireAt.After(time.Now()) {
-			return &hit.Value
+			return detachFUPEntry(&hit.Value)
 		}
 		delete(d.fupMemory, entryKey)
 	}
@@ -139,7 +154,7 @@ func (d *MemoryCacheDriver) getFUPEntry(entryKey string) *contract.FUPCacheEntry
 
 func (d *MemoryCacheDriver) setFUPEntry(entryKey string, entry *contract.FUPCacheEntry) {
 	d.fupMemory[entryKey] = MemoryCacheEntry[contract.FUPCacheEntry]{
-		Value:    *entry,
+		Value:    *detachFUPEntry(entry),
 		ExpireAt: time.Now().Add(constants.FUPEntryTTL),
 	}
 }

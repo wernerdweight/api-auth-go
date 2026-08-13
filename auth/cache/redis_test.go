@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/alicebob/miniredis/v2"
-	"github.com/wernerdweight/api-auth-go/v2/auth/constants"
-	"github.com/wernerdweight/api-auth-go/v2/auth/contract"
+	"github.com/wernerdweight/api-auth-go/v3/auth/constants"
+	"github.com/wernerdweight/api-auth-go/v3/auth/contract"
 )
 
 func newTestRedisDriver(t *testing.T) (*RedisCacheDriver, *miniredis.Miniredis) {
@@ -44,18 +44,21 @@ func stableNow(t *testing.T) time.Time {
 	return now
 }
 
-// sameHourOtherMinute returns a timestamp of a different minute of the same hour as the given one
-func sameHourOtherMinute(now time.Time) time.Time {
-	if other := now.Add(time.Minute); other.Hour() == now.Hour() {
-		return other
+// earlierMinuteOfSameHour returns a timestamp of an earlier minute of the same hour as the given
+// one, which is what an entry written by the previous request looks like once a minute has passed.
+// There is no such minute during the first minute of an hour, hence the second return value.
+func earlierMinuteOfSameHour(t *testing.T, now time.Time) (time.Time, bool) {
+	t.Helper()
+	if 0 == now.Minute() {
+		return time.Time{}, false
 	}
-	return now.Add(-time.Minute)
+	return now.Add(-time.Minute), true
 }
 
 func TestRedisCacheDriver_IncrementFUPEntry(t *testing.T) {
 	tests := []struct {
 		name      string
-		updatedAt func(now time.Time) time.Time
+		updatedAt func(t *testing.T, now time.Time) time.Time
 		used      map[constants.Period]int
 		want      map[constants.Period]int
 	}{
@@ -71,7 +74,7 @@ func TestRedisCacheDriver_IncrementFUPEntry(t *testing.T) {
 		},
 		{
 			name:      "same minute",
-			updatedAt: func(now time.Time) time.Time { return now },
+			updatedAt: func(_ *testing.T, now time.Time) time.Time { return now },
 			used: map[constants.Period]int{
 				constants.PeriodMinutely: 5,
 				constants.PeriodHourly:   5,
@@ -88,8 +91,14 @@ func TestRedisCacheDriver_IncrementFUPEntry(t *testing.T) {
 			},
 		},
 		{
-			name:      "another minute of the same hour",
-			updatedAt: sameHourOtherMinute,
+			name: "another minute of the same hour",
+			updatedAt: func(t *testing.T, now time.Time) time.Time {
+				earlier, ok := earlierMinuteOfSameHour(t, now)
+				if !ok {
+					t.Skip("there is no earlier minute of the same hour to store during the first minute of an hour")
+				}
+				return earlier
+			},
 			used: map[constants.Period]int{
 				constants.PeriodMinutely: 5,
 				constants.PeriodHourly:   5,
@@ -108,7 +117,7 @@ func TestRedisCacheDriver_IncrementFUPEntry(t *testing.T) {
 		},
 		{
 			name:      "previous year",
-			updatedAt: func(now time.Time) time.Time { return now.AddDate(-1, 0, 0) },
+			updatedAt: func(_ *testing.T, now time.Time) time.Time { return now.AddDate(-1, 0, 0) },
 			used: map[constants.Period]int{
 				constants.PeriodMinutely: 5,
 				constants.PeriodHourly:   5,
@@ -129,7 +138,7 @@ func TestRedisCacheDriver_IncrementFUPEntry(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			driver, server := newTestRedisDriver(t)
 			if nil != tt.updatedAt {
-				storeFUPEntry(t, server, "key", tt.updatedAt(stableNow(t)), tt.used)
+				storeFUPEntry(t, server, "key", tt.updatedAt(t, stableNow(t)), tt.used)
 			}
 			entry, err := driver.IncrementFUPEntry("key")
 			if nil != err {
@@ -178,6 +187,44 @@ func TestRedisCacheDriver_IncrementFUPEntry_StoredFormat(t *testing.T) {
 	}
 	if entry.UpdatedAt.IsZero() {
 		t.Error("GetFUPEntry() updatedAt is zero, want the increment timestamp")
+	}
+}
+
+// TestRedisCacheDriver_IncrementFUPEntry_Stale covers a request whose arguments were sampled
+// before a request that reached Redis first - it must not reset the counters that request already
+// advanced, nor move the stored timestamp backwards
+func TestRedisCacheDriver_IncrementFUPEntry_Stale(t *testing.T) {
+	driver, server := newTestRedisDriver(t)
+	// the entry of a request that was sampled later and already ran, as an increment sampled
+	// before the minute boundary sees it
+	newer := stableNow(t).Add(time.Minute)
+	storeFUPEntry(t, server, "key", newer, map[constants.Period]int{
+		constants.PeriodMinutely: 1,
+		constants.PeriodHourly:   5,
+		constants.PeriodDaily:    5,
+		constants.PeriodWeekly:   5,
+		constants.PeriodMonthly:  5,
+	})
+
+	entry, err := driver.IncrementFUPEntry("key")
+	if nil != err {
+		t.Fatalf("IncrementFUPEntry() error = %v", err)
+	}
+
+	want := map[constants.Period]int{
+		constants.PeriodMinutely: 2,
+		constants.PeriodHourly:   6,
+		constants.PeriodDaily:    6,
+		constants.PeriodWeekly:   6,
+		constants.PeriodMonthly:  6,
+	}
+	for _, period := range constants.FUPScopePeriods {
+		if got := entry.GetUsed(period); got != want[period] {
+			t.Errorf("IncrementFUPEntry() %s = %d, want %d", period, got, want[period])
+		}
+	}
+	if entry.UpdatedAt.Before(newer) {
+		t.Errorf("IncrementFUPEntry() updatedAt = %v, want no earlier than %v", entry.UpdatedAt, newer)
 	}
 }
 

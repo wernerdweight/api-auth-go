@@ -1,8 +1,9 @@
 package config
 
 import (
-	"github.com/wernerdweight/api-auth-go/v2/auth/checker"
-	"github.com/wernerdweight/api-auth-go/v2/auth/contract"
+	"github.com/wernerdweight/api-auth-go/v3/auth/checker"
+	"github.com/wernerdweight/api-auth-go/v3/auth/contract"
+	"log"
 	"time"
 )
 
@@ -233,6 +234,23 @@ func (p *Provider) Init(config contract.Config) {
 
 	if nil != config.TargetOneOffTokenHandlers {
 		p.config.TargetOneOffTokenHandlers = config.TargetOneOffTokenHandlers
+	}
+
+	p.warnAboutFUPWithoutCache()
+}
+
+// warnAboutFUPWithoutCache reports FUP limits that are configured but can never be applied, since
+// counting requests requires a cache. Without the warning, the misconfiguration is only visible as
+// a log line per request (or, for the client and user scopes, as failing requests).
+func (p *Provider) warnAboutFUPWithoutCache() {
+	if p.IsCacheEnabled() {
+		return
+	}
+	if p.IsAnonymousFUPEnabled() {
+		log.Println("warning: anonymous FUP scope is configured, but no cache driver is - the anonymous FUP limits will not be applied")
+	}
+	if p.IsClientFUPEnabled() || p.IsUserFUPEnabled() {
+		log.Println("warning: a FUP checker is configured, but no cache driver is - the FUP limits can't be checked")
 	}
 }
 
