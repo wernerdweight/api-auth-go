@@ -20,7 +20,11 @@ go get github.com/wernerdweight/api-auth-go/v3
 
 ### Upgrading from v2
 
-`CacheDriverInterface` has a new method, `IncrementFUPEntry` (see [FUP limits](#with-fup-limits)). The bundled drivers implement it; if you use a custom cache driver, you need to implement it as well, and its read-modify-write cycle has to be atomic. Nothing else changed, and no stored data needs to be migrated.
+Update your imports from `github.com/wernerdweight/api-auth-go/v2/...` to `github.com/wernerdweight/api-auth-go/v3/...` (`go get` alone does not rewrite them).
+
+`CacheDriverInterface` has a new method, `IncrementFUPEntry` (see [FUP limits](#with-fup-limits)). The bundled drivers implement it; if you use a custom cache driver, you need to implement it as well.
+
+Nothing else changed, and no stored data needs to be migrated - the format of the cached FUP entries is the same, so no counter is reset by the upgrade.
 
 Configuration and Usage
 ------------
@@ -553,7 +557,11 @@ contract.Config{
 }
 ```
 
-If you implement your own driver, note that `IncrementFUPEntry` (the read-modify-write cycle of a FUP counter) has to be atomic - requests sharing a FUP key are handled concurrently and would otherwise overwrite each other's counters, letting more requests through than the limit allows. The built-in Redis driver does the increment in a Lua script.
+If you implement your own driver, `IncrementFUPEntry` is the method to be careful about (the full contract is documented at `contract.CacheDriverInterface`):
+
+- the read-modify-write cycle of a counter has to be **atomic** - requests sharing a FUP key are handled concurrently and would otherwise overwrite each other's counters, letting more requests through than the limit allows (the built-in Redis driver does the increment in a Lua script, the memory one under a lock),
+- an increment that arrives **out of order** (its period was decided before another request that was stored first) must not reset a counter or move the stored timestamp backwards,
+- entries should **expire** after `constants.FUPEntryTTL` of inactivity, otherwise counters of one-off sources (per-IP, per-cookie) accumulate forever.
 
 ### With user registration:
 
