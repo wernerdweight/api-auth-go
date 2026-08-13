@@ -2,23 +2,16 @@ package fup
 
 import (
 	"fmt"
-	"github.com/wernerdweight/api-auth-go/v2/auth/config"
-	"github.com/wernerdweight/api-auth-go/v2/auth/constants"
-	"github.com/wernerdweight/api-auth-go/v2/auth/contract"
+	"github.com/wernerdweight/api-auth-go/v3/auth/config"
+	"github.com/wernerdweight/api-auth-go/v3/auth/constants"
+	"github.com/wernerdweight/api-auth-go/v3/auth/contract"
 	"strings"
 )
 
 func checkLimits(scope *contract.FUPScope, key string, cacheId string, path string, cacheDriver contract.CacheDriverInterface) (map[constants.Period]contract.FUPLimits, *contract.FUPScopeLimits) {
 	limits := make(map[constants.Period]contract.FUPLimits)
 	cacheKey := fmt.Sprintf("%s_%s", key, strings.Replace(cacheId, "/", "-", -1))
-	cacheEntry, err := cacheDriver.GetFUPEntry(cacheKey)
-	if nil != err {
-		return nil, &contract.FUPScopeLimits{
-			Error: err,
-		}
-	}
-	cacheEntry.Increment()
-	err = cacheDriver.SetFUPEntry(cacheKey, cacheEntry)
+	cacheEntry, err := cacheDriver.IncrementFUPEntry(cacheKey)
 	if nil != err {
 		return nil, &contract.FUPScopeLimits{
 			Error: err,

@@ -15,8 +15,16 @@ Installation
 ### 1. Installation
 
 ```bash
-go get github.com/wernerdweight/api-auth-go
+go get github.com/wernerdweight/api-auth-go/v3
 ```
+
+### Upgrading from v2
+
+Update your imports from `github.com/wernerdweight/api-auth-go/v2/...` to `github.com/wernerdweight/api-auth-go/v3/...` (`go get` alone does not rewrite them).
+
+`CacheDriverInterface` has a new method, `IncrementFUPEntry` (see [FUP limits](#with-fup-limits)). The bundled drivers implement it; if you use a custom cache driver, you need to implement it as well.
+
+Nothing else changed, and no stored data needs to be migrated - the format of the cached FUP entries is the same, so no counter is reset by the upgrade.
 
 Configuration and Usage
 ------------
@@ -36,6 +44,11 @@ Full configuration structure (only client configuration is mandatory, default va
         // FUPChecker: the checker used to check FUP limits that implements FUPCheckerInterface (optional; if you omit FUP checker, FUP limits will not be checked)
         // NOTE: if you want to use FUP limits, you must also enable Cache (see below)
         FUPChecker FUPCheckerInterface
+        // AnonymousFUPScope: FUP limits applied to requests that fail to authenticate (optional; if you omit the scope, unauthenticated traffic is not limited)
+        // NOTE: if you want to use anonymous FUP limits, you must also enable Cache (see below)
+        AnonymousFUPScope *FUPScope
+        // AnonymousFUPChecker: the checker used to check anonymous FUP limits that implements FUPCheckerInterface - defaults to fup.IPFUPChecker
+        AnonymousFUPChecker FUPCheckerInterface
         // ApiTokenExpirationInterval: token expiration in seconds - defaults to 3600 (1 hour)
         OneOffTokenExpirationInterval *time.Duration
     }
@@ -544,6 +557,12 @@ contract.Config{
 }
 ```
 
+If you implement your own driver, `IncrementFUPEntry` is the method to be careful about (the full contract is documented at `contract.CacheDriverInterface`):
+
+- the read-modify-write cycle of a counter has to be **atomic** - requests sharing a FUP key are handled concurrently and would otherwise overwrite each other's counters, letting more requests through than the limit allows (the built-in Redis driver does the increment in a Lua script, the memory one under a lock),
+- an increment that arrives **out of order** (its period was decided before another request that was stored first) must not reset a counter or move the stored timestamp backwards,
+- entries should **expire** after `constants.FUPEntryTTL` of inactivity, otherwise counters of one-off sources (per-IP, per-cookie) accumulate forever.
+
 ### With user registration:
 
 By default, user registration is disabled. If you don't already have registration process in place, you can enable built-in registration by setting `WithRegistration` to `true` in `User` configuration (see below).
@@ -804,6 +823,47 @@ If no limit is reached, each response to a request that has limits configured wi
 ```json
 {"hourly":{"limit":200,"used":3},"minutely":{"limit":10,"used":1},"weekly":{"limit":100,"used":46}}
 ```
+
+FUP counters are stored in the cache under a key derived from the FUP key (client id, user login, `anonymous`) and the value the checker limits by (path, IP, cookie). They are incremented atomically, and they expire after 35 days of inactivity (slightly more than the longest supported interval).
+
+### With anonymous FUP limits:
+
+The FUP limits above only apply to requests that authenticate successfully. Requests that don't (unknown or missing credentials) resolve no client, so there is no scope to check them against, and they would not be limited at all.
+
+Set `Client.AnonymousFUPScope` to limit such requests as well. The scope is checked with `Client.AnonymousFUPChecker` (`fup.IPFUPChecker` unless you configure another one) under the FUP key `anonymous`, so the limits are counted per IP address by default:
+
+```go
+package main
+
+import "github.com/wernerdweight/api-auth-go/auth/contract"
+
+anonymousFUPScope := contract.FUPScope{
+    "per-ip": map[string]any{
+        "minutely": 60,
+        "daily":    5000,
+    },
+}
+
+contract.Config{
+    Client: contract.ClientConfig{
+        ...
+        AnonymousFUPScope: &anonymousFUPScope,
+        // AnonymousFUPChecker: the checker to use - defaults to fup.IPFUPChecker
+        AnonymousFUPChecker: fup.IPFUPChecker{},
+    },
+    Cache: &contract.CacheConfig{
+        Driver: cache.NewRedisCacheDriver(redisDsn, newApiClient, newApiUser),
+    },
+}
+```
+
+Once the limits are depleted, the request is rejected with `429 Too Many Requests` (and the `Retry-After` header) instead of `401 Unauthorized`. Below the limits, requests keep failing with the authentication error they would fail with without the anonymous scope - the scope only limits how many of them a single source can make, it never grants access.
+
+Only requests that fail to authenticate because of the credentials they carry are limited. If authentication fails for a reason on the application's side (a provider that can't reach its database, an unavailable cache), the request keeps getting that error and is not counted, so an outage doesn't turn into `429` for everyone.
+
+Note that the checkers limit by client-controlled values (`c.ClientIP()` resolves to the `X-Forwarded-For` header unless you set gin's trusted proxies, cookies are sent by the client), so anonymous limits are bypassable by a caller that varies them. They are meant to keep unauthenticated bursts from reaching the rest of the application, not to serve as an authorization boundary.
+
+Requests excluded from authentication via `ExcludeHandlers` are not limited either - they never reach the authentication.
 
 Usage
 ------------

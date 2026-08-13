@@ -1,8 +1,8 @@
 package provider
 
 import (
-	"github.com/wernerdweight/api-auth-go/v2/auth/contract"
-	"github.com/wernerdweight/api-auth-go/v2/auth/entity"
+	"github.com/wernerdweight/api-auth-go/v3/auth/contract"
+	"github.com/wernerdweight/api-auth-go/v3/auth/entity"
 )
 
 // MemoryApiClientProvider is the simplest implementation of the ApiClientProviderInterface

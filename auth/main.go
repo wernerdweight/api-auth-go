@@ -2,9 +2,10 @@ package auth
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/wernerdweight/api-auth-go/v2/auth/config"
-	"github.com/wernerdweight/api-auth-go/v2/auth/contract"
-	"github.com/wernerdweight/api-auth-go/v2/auth/security"
+	"github.com/wernerdweight/api-auth-go/v3/auth/config"
+	"github.com/wernerdweight/api-auth-go/v3/auth/contract"
+	"github.com/wernerdweight/api-auth-go/v3/auth/fup"
+	"github.com/wernerdweight/api-auth-go/v3/auth/security"
 	"github.com/wernerdweight/events-go"
 	"log"
 	"net/http"
@@ -18,6 +19,11 @@ import (
 //	routes.Register(r)
 func Middleware(r *gin.Engine, c contract.Config) gin.HandlerFunc {
 	log.Println("setting up api-auth middleware...")
+	// the anonymous FUP checker is defaulted here rather than among the config provider's defaults,
+	// since the fup package depends on the config package (c is a copy, so this is not visible to the caller)
+	if nil != c.Client.AnonymousFUPScope && nil == c.Client.AnonymousFUPChecker {
+		c.Client.AnonymousFUPChecker = fup.IPFUPChecker{}
+	}
 	config.ProviderInstance.Init(c)
 	if config.ProviderInstance.IsCacheEnabled() {
 		log.Println("initializing cache driver...")

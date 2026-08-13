@@ -3,10 +3,11 @@ package security
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/wernerdweight/api-auth-go/v2/auth/config"
-	"github.com/wernerdweight/api-auth-go/v2/auth/constants"
-	"github.com/wernerdweight/api-auth-go/v2/auth/contract"
+	"github.com/wernerdweight/api-auth-go/v3/auth/config"
+	"github.com/wernerdweight/api-auth-go/v3/auth/constants"
+	"github.com/wernerdweight/api-auth-go/v3/auth/contract"
 	"log"
+	"net/http"
 	"regexp"
 )
 
@@ -156,6 +157,31 @@ func authenticateApiClient(c *gin.Context) (contract.ApiClientInterface, *contra
 	return nil, contract.NewAuthError(contract.NoCredentialsProvided, nil)
 }
 
+// checkAnonymousFUP applies the anonymous FUP limits to a request that failed to authenticate.
+// It returns a FUP error if the limits are depleted, nil if the request may continue to be
+// handled as unauthenticated.
+//
+// Only errors the caller's credentials are responsible for are limited. Authentication can also
+// fail for reasons on this side (a provider that can't reach its database, a cache that is
+// unavailable or not configured); such requests must keep getting their internal error instead of
+// filling up a limit and eventually turning an outage into 429s.
+func checkAnonymousFUP(c *gin.Context, authErr *contract.AuthError) *contract.AuthError {
+	if !config.ProviderInstance.IsAnonymousFUPEnabled() || http.StatusUnauthorized != authErr.Status {
+		return nil
+	}
+	fupLimits := config.ProviderInstance.GetAnonymousFUPChecker().Check(config.ProviderInstance.GetAnonymousFUPScope(), c, constants.AnonymousFUPKey)
+	if nil != fupLimits.Error {
+		// the authentication error is more relevant to the caller than a FUP infrastructure problem
+		log.Printf("can't check anonymous FUP limits: %v", fupLimits.Error.Err)
+		return nil
+	}
+	if fupLimits.Accessible != constants.ScopeAccessibilityForbidden {
+		return nil
+	}
+	c.Header(constants.RetryAfterHeader, fmt.Sprintf("%d", fupLimits.GetRetryAfter()))
+	return contract.NewFUPError(contract.RequestLimitDepleted, fupLimits.Limits)
+}
+
 func authenticateApiUser(c *gin.Context) (contract.ApiUserInterface, *contract.AuthError) {
 	if c.Request.Header.Get(constants.ApiUserTokenHeader) == "" {
 		return nil, contract.NewAuthError(contract.UserTokenRequired, nil)
@@ -235,6 +261,10 @@ func Authenticate(c *gin.Context) *contract.AuthError {
 
 	apiClient, err := authenticateApiClient(c)
 	if nil != err {
+		// no client could be resolved, so the request can only be limited as anonymous traffic
+		if fupErr := checkAnonymousFUP(c, err); nil != fupErr {
+			return fupErr
+		}
 		return err
 	}
 

@@ -1,8 +1,9 @@
 package config
 
 import (
-	"github.com/wernerdweight/api-auth-go/v2/auth/checker"
-	"github.com/wernerdweight/api-auth-go/v2/auth/contract"
+	"github.com/wernerdweight/api-auth-go/v3/auth/checker"
+	"github.com/wernerdweight/api-auth-go/v3/auth/contract"
+	"log"
 	"time"
 )
 
@@ -102,6 +103,18 @@ func (p *Provider) GetUserFUPChecker() contract.FUPCheckerInterface {
 	return p.config.User.FUPChecker
 }
 
+func (p *Provider) GetAnonymousFUPChecker() contract.FUPCheckerInterface {
+	return p.config.Client.AnonymousFUPChecker
+}
+
+func (p *Provider) GetAnonymousFUPScope() *contract.FUPScope {
+	return p.config.Client.AnonymousFUPScope
+}
+
+func (p *Provider) IsAnonymousFUPEnabled() bool {
+	return nil != p.config.Client.AnonymousFUPScope
+}
+
 func (p *Provider) IsClientFUPEnabled() bool {
 	return nil != p.config.Client.FUPChecker
 }
@@ -185,6 +198,12 @@ func (p *Provider) Init(config contract.Config) {
 	if nil != config.Client.FUPChecker {
 		p.config.Client.FUPChecker = config.Client.FUPChecker
 	}
+	if nil != config.Client.AnonymousFUPScope {
+		p.config.Client.AnonymousFUPScope = config.Client.AnonymousFUPScope
+	}
+	if nil != config.Client.AnonymousFUPChecker {
+		p.config.Client.AnonymousFUPChecker = config.Client.AnonymousFUPChecker
+	}
 	if nil != config.Client.OneOffTokenExpirationInterval {
 		p.config.Client.OneOffTokenExpirationInterval = config.Client.OneOffTokenExpirationInterval
 	}
@@ -216,6 +235,23 @@ func (p *Provider) Init(config contract.Config) {
 	if nil != config.TargetOneOffTokenHandlers {
 		p.config.TargetOneOffTokenHandlers = config.TargetOneOffTokenHandlers
 	}
+
+	p.warnAboutFUPWithoutCache()
+}
+
+// warnAboutFUPWithoutCache reports FUP limits that are configured but can never be applied, since
+// counting requests requires a cache. Without the warning, the misconfiguration is only visible as
+// a log line per request (or, for the client and user scopes, as failing requests).
+func (p *Provider) warnAboutFUPWithoutCache() {
+	if p.IsCacheEnabled() {
+		return
+	}
+	if p.IsAnonymousFUPEnabled() {
+		log.Println("warning: anonymous FUP scope is configured, but no cache driver is - the anonymous FUP limits will not be applied")
+	}
+	if p.IsClientFUPEnabled() || p.IsUserFUPEnabled() {
+		log.Println("warning: a FUP checker is configured, but no cache driver is - the FUP limits can't be checked")
+	}
 }
 
 var (
@@ -241,6 +277,8 @@ var ProviderInstance = &Provider{
 			UseScopeAccessModel:           &defaultClientUseScopeAccessModel,
 			AccessScopeChecker:            checker.PathAccessScopeChecker{},
 			FUPChecker:                    nil,
+			AnonymousFUPScope:             nil,
+			AnonymousFUPChecker:           nil,
 			OneOffTokenExpirationInterval: &defaultOneOffTokenExpirationInterval,
 		},
 		User: &contract.UserConfig{

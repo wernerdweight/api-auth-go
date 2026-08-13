@@ -30,10 +30,16 @@ const (
 	PeriodMonthly                Period             = "monthly"
 	FUPIPKey                                        = "per-ip"
 	FUPCookieKey                                    = "per-cookie"
+	AnonymousFUPKey                                 = "anonymous"
 
 	ApiClient = "api-client"
 	ApiUser   = "api-user"
 )
+
+// FUPEntryTTL is the expiration of FUP cache entries. It is slightly longer than the longest
+// FUP period (monthly), so that counters that are no longer used (e.g. per-IP counters of
+// one-off visitors) are released instead of growing unbounded.
+const FUPEntryTTL = time.Hour * 24 * 35
 
 var ScopeAccessibilityOptions = []ScopeAccessibility{
 	ScopeAccessibilityAccessible,
@@ -80,6 +86,35 @@ func (p Period) GetResetTime() time.Time {
 		return now.EndOfMonth()
 	}
 	return time.Now()
+}
+
+// GetTimestampBounds returns the inclusive lexicographical bounds of the period that contains t.
+// A timestamp belongs to the same period as t if its RFC 3339 representation truncated to the
+// length of the returned bounds is not lower than the first and not higher than the second one.
+// Both bounds always have the same length, and periods other than weekly are a single value.
+//
+// This is the same comparison as GetFormatToCompare, expressed so that it can be evaluated by a
+// cache backend (which only sees the serialized timestamp) instead of in Go.
+//
+// Both the bounds and the timestamps they are compared against are expressed in the local time of
+// the application instance (as GetFormatToCompare and GetResetTime are), so instances that run in
+// different time zones and share a cache do not agree on where a period starts and ends.
+func (p Period) GetTimestampBounds(t time.Time) (string, string) {
+	switch p {
+	case PeriodMinutely:
+		return t.Format("2006-01-02T15:04"), t.Format("2006-01-02T15:04")
+	case PeriodHourly:
+		return t.Format("2006-01-02T15"), t.Format("2006-01-02T15")
+	case PeriodDaily:
+		return t.Format("2006-01-02"), t.Format("2006-01-02")
+	case PeriodWeekly:
+		// two timestamps share an ISO week exactly if they fall within the same Monday to Sunday span
+		monday := t.AddDate(0, 0, -((int(t.Weekday()) + 6) % 7))
+		return monday.Format("2006-01-02"), monday.AddDate(0, 0, 6).Format("2006-01-02")
+	case PeriodMonthly:
+		return t.Format("2006-01"), t.Format("2006-01")
+	}
+	return "", ""
 }
 
 var FUPScopePeriods = []Period{

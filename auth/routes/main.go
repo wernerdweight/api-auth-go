@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/wernerdweight/api-auth-go/v2/auth/config"
+	"github.com/wernerdweight/api-auth-go/v3/auth/config"
 )
 
 // Register adds auth routes (/authenticate, /registration/*, /resetting/*, /token/generate)

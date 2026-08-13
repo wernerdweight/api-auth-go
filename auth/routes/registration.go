@@ -5,10 +5,10 @@ import (
 	"regexp"
 
 	"github.com/gin-gonic/gin"
-	"github.com/wernerdweight/api-auth-go/v2/auth/config"
-	"github.com/wernerdweight/api-auth-go/v2/auth/constants"
-	"github.com/wernerdweight/api-auth-go/v2/auth/contract"
-	"github.com/wernerdweight/api-auth-go/v2/auth/encoder"
+	"github.com/wernerdweight/api-auth-go/v3/auth/config"
+	"github.com/wernerdweight/api-auth-go/v3/auth/constants"
+	"github.com/wernerdweight/api-auth-go/v3/auth/contract"
+	"github.com/wernerdweight/api-auth-go/v3/auth/encoder"
 	"github.com/wernerdweight/events-go"
 )
 

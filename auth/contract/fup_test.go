@@ -2,7 +2,7 @@ package contract
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/wernerdweight/api-auth-go/v2/auth/constants"
+	"github.com/wernerdweight/api-auth-go/v3/auth/constants"
 	"net/http"
 	"testing"
 	"time"
