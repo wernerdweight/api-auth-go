@@ -285,10 +285,14 @@ func (d *RedisCacheDriver) SetFUPEntry(key string, entry *contract.FUPCacheEntry
 }
 
 func (d *RedisCacheDriver) IncrementFUPEntry(key string) (*contract.FUPCacheEntry, *contract.AuthError) {
+	return d.IncrementFUPEntryWithTTL(key, constants.FUPEntryTTL)
+}
+
+func (d *RedisCacheDriver) IncrementFUPEntryWithTTL(key string, ttl time.Duration) (*contract.FUPCacheEntry, *contract.AuthError) {
 	entryKey := d.getPrefix(GroupTypeFUP) + key
 	updatedAt := time.Now()
 	args := make([]any, 0, 2+len(constants.FUPScopePeriods)*3)
-	args = append(args, updatedAt.Format(time.RFC3339Nano), int(constants.FUPEntryTTL.Seconds()))
+	args = append(args, updatedAt.Format(time.RFC3339Nano), int(ttl.Seconds()))
 	for _, period := range constants.FUPScopePeriods {
 		from, to := period.GetTimestampBounds(updatedAt)
 		args = append(args, string(period), from, to)

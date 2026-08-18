@@ -286,3 +286,37 @@ func TestRedisCacheDriver_IncrementFUPEntry_Concurrent(t *testing.T) {
 		t.Errorf("GetFUPEntry() daily = %d, want %d", got, requests)
 	}
 }
+
+// TestRedisCacheDriver_IncrementFUPEntryWithTTL_TTL covers the expiration the FUP checkers derive
+// from the scope - a scope limiting nothing longer than a day must not keep per-IP keys for 35 days
+func TestRedisCacheDriver_IncrementFUPEntryWithTTL_TTL(t *testing.T) {
+	driver, server := newTestRedisDriver(t)
+	ttl := constants.PeriodDaily.GetEntryTTL()
+
+	entry, err := driver.IncrementFUPEntryWithTTL("key", ttl)
+	if nil != err {
+		t.Fatalf("IncrementFUPEntryWithTTL() error = %v", err)
+	}
+	if got := entry.GetUsed(constants.PeriodDaily); 1 != got {
+		t.Errorf("IncrementFUPEntryWithTTL() daily = %d, want 1", got)
+	}
+	if got := server.TTL("test:fup_key"); ttl != got {
+		t.Errorf("TTL() = %v, want %v", got, ttl)
+	}
+
+	// the expiration is refreshed on every increment, so the entry only has to outlive the gap
+	// between two requests
+	server.FastForward(ttl / 2)
+	if _, err := driver.IncrementFUPEntryWithTTL("key", ttl); nil != err {
+		t.Fatalf("IncrementFUPEntryWithTTL() error = %v", err)
+	}
+	if got := server.TTL("test:fup_key"); ttl != got {
+		t.Errorf("TTL() = %v, want %v after a second increment", got, ttl)
+	}
+
+	// while a gap longer than the TTL releases the key instead of keeping it around
+	server.FastForward(ttl + time.Minute)
+	if server.Exists("test:fup_key") {
+		t.Errorf("Exists() = true, want the entry to be released after %v of inactivity", ttl)
+	}
+}

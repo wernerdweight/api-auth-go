@@ -130,3 +130,30 @@ func TestMemoryCacheDriver_FUPEntryExpiration(t *testing.T) {
 		t.Error("the expired entry is still in memory")
 	}
 }
+
+// TestMemoryCacheDriver_IncrementFUPEntryWithTTL covers that the memory driver honours the
+// caller-supplied expiration as well, so both bundled drivers behave the same
+func TestMemoryCacheDriver_IncrementFUPEntryWithTTL(t *testing.T) {
+	driver := newTestMemoryDriver(t)
+	ttl := constants.PeriodDaily.GetEntryTTL()
+
+	if _, err := driver.IncrementFUPEntryWithTTL("key", ttl); nil != err {
+		t.Fatalf("IncrementFUPEntryWithTTL() error = %v", err)
+	}
+	stored, ok := driver.fupMemory["test:fup_key"]
+	if !ok {
+		t.Fatalf("fupMemory has no entry for the incremented key")
+	}
+	if want, got := time.Now().Add(ttl), stored.ExpireAt; got.Sub(want) > time.Minute || want.Sub(got) > time.Minute {
+		t.Errorf("ExpireAt = %v, want about %v", got, want)
+	}
+
+	// the default is unchanged for callers going through the interface method
+	if _, err := driver.IncrementFUPEntry("other"); nil != err {
+		t.Fatalf("IncrementFUPEntry() error = %v", err)
+	}
+	stored = driver.fupMemory["test:fup_other"]
+	if want, got := time.Now().Add(constants.FUPEntryTTL), stored.ExpireAt; got.Sub(want) > time.Minute || want.Sub(got) > time.Minute {
+		t.Errorf("ExpireAt = %v, want about %v", got, want)
+	}
+}

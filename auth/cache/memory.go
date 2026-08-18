@@ -152,10 +152,10 @@ func (d *MemoryCacheDriver) getFUPEntry(entryKey string) *contract.FUPCacheEntry
 	}
 }
 
-func (d *MemoryCacheDriver) setFUPEntry(entryKey string, entry *contract.FUPCacheEntry) {
+func (d *MemoryCacheDriver) setFUPEntry(entryKey string, entry *contract.FUPCacheEntry, ttl time.Duration) {
 	d.fupMemory[entryKey] = MemoryCacheEntry[contract.FUPCacheEntry]{
 		Value:    *detachFUPEntry(entry),
-		ExpireAt: time.Now().Add(constants.FUPEntryTTL),
+		ExpireAt: time.Now().Add(ttl),
 	}
 }
 
@@ -168,17 +168,21 @@ func (d *MemoryCacheDriver) GetFUPEntry(key string) (*contract.FUPCacheEntry, *c
 func (d *MemoryCacheDriver) SetFUPEntry(key string, entry *contract.FUPCacheEntry) *contract.AuthError {
 	d.fupLock.Lock()
 	defer d.fupLock.Unlock()
-	d.setFUPEntry(d.getPrefix(GroupTypeFUP)+key, entry)
+	d.setFUPEntry(d.getPrefix(GroupTypeFUP)+key, entry, constants.FUPEntryTTL)
 	return nil
 }
 
 func (d *MemoryCacheDriver) IncrementFUPEntry(key string) (*contract.FUPCacheEntry, *contract.AuthError) {
+	return d.IncrementFUPEntryWithTTL(key, constants.FUPEntryTTL)
+}
+
+func (d *MemoryCacheDriver) IncrementFUPEntryWithTTL(key string, ttl time.Duration) (*contract.FUPCacheEntry, *contract.AuthError) {
 	d.fupLock.Lock()
 	defer d.fupLock.Unlock()
 	entryKey := d.getPrefix(GroupTypeFUP) + key
 	entry := d.getFUPEntry(entryKey)
 	entry.Increment()
-	d.setFUPEntry(entryKey, entry)
+	d.setFUPEntry(entryKey, entry, ttl)
 	return entry, nil
 }
 

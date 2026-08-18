@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"sync"
 	"testing"
+	"time"
 )
 
 func TestAccessScope_GetAccessibility(t *testing.T) {
@@ -673,6 +674,75 @@ func TestFUPScope_GetLimit_HasLimit(t *testing.T) {
 			pathWithoutPeriod := regexp.MustCompile(`^(.*)\.(minute|hour|dai|week|month)ly$`).ReplaceAllString(tt.args.path, "$1")
 			if got := tt.scope.HasLimit(pathWithoutPeriod); got != tt.has {
 				t.Errorf("FUPScope.HasLimit() = %v, want %v", got, tt.has)
+			}
+		})
+	}
+}
+
+// TestFUPScope_GetEntryTTL covers that an entry is kept exactly as long as the periods the scope
+// limits by need it - the point of the whole thing is that a scope limiting nothing longer than a
+// day doesn't keep per-IP keys for 35 days
+func TestFUPScope_GetEntryTTL(t *testing.T) {
+	tests := []struct {
+		name  string
+		scope FUPScope
+		path  string
+		want  time.Duration
+	}{
+		{
+			// the live anonymous scope
+			name:  "minutely and daily",
+			scope: FUPScope{constants.FUPIPKey: map[string]any{"minutely": 60, "daily": 5000}},
+			path:  constants.FUPIPKey,
+			want:  constants.PeriodDaily.GetEntryTTL(),
+		},
+		{
+			name:  "the longest period wins",
+			scope: FUPScope{constants.FUPIPKey: map[string]any{"minutely": 60, "monthly": 100000}},
+			path:  constants.FUPIPKey,
+			want:  constants.FUPEntryTTL,
+		},
+		{
+			name:  "minutely only",
+			scope: FUPScope{constants.FUPIPKey: map[string]any{"minutely": 60}},
+			path:  constants.FUPIPKey,
+			want:  constants.PeriodMinutely.GetEntryTTL(),
+		},
+		{
+			// a negative limit means no limitation, so nothing has to be counted for that period
+			name:  "negative limits are not counted",
+			scope: FUPScope{constants.FUPIPKey: map[string]any{"daily": 500, "monthly": -1}},
+			path:  constants.FUPIPKey,
+			want:  constants.PeriodDaily.GetEntryTTL(),
+		},
+		{
+			// other paths must not extend this one
+			name: "another path is not counted",
+			scope: FUPScope{
+				constants.FUPIPKey:     map[string]any{"minutely": 60},
+				constants.FUPCookieKey: map[string]any{"monthly": 1000},
+			},
+			path: constants.FUPIPKey,
+			want: constants.PeriodMinutely.GetEntryTTL(),
+		},
+		{
+			// nothing is limited, so fall back to the expiration that covers every period
+			name:  "path not limited",
+			scope: FUPScope{constants.FUPCookieKey: map[string]any{"daily": 500}},
+			path:  constants.FUPIPKey,
+			want:  constants.FUPEntryTTL,
+		},
+		{
+			name:  "empty scope",
+			scope: FUPScope{},
+			path:  constants.FUPIPKey,
+			want:  constants.FUPEntryTTL,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.scope.GetEntryTTL(tt.path); tt.want != got {
+				t.Errorf("GetEntryTTL() = %v, want %v", got, tt.want)
 			}
 		})
 	}

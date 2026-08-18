@@ -77,3 +77,33 @@ func TestPeriod_GetTimestampBounds_WeekBoundaries(t *testing.T) {
 		})
 	}
 }
+
+// TestPeriod_GetEntryTTL covers that every period keeps a counter alive for longer than the period
+// it counts - an entry expiring within its own period would reset the counter early and let more
+// requests through than the limit allows
+func TestPeriod_GetEntryTTL(t *testing.T) {
+	tests := []struct {
+		period  Period
+		want    time.Duration
+		atLeast time.Duration
+	}{
+		{period: PeriodMinutely, want: time.Hour, atLeast: time.Minute},
+		{period: PeriodHourly, want: time.Hour * 25, atLeast: time.Hour},
+		{period: PeriodDaily, want: time.Hour * 24 * 2, atLeast: time.Hour * 24},
+		{period: PeriodWeekly, want: time.Hour * 24 * 8, atLeast: time.Hour * 24 * 7},
+		{period: PeriodMonthly, want: FUPEntryTTL, atLeast: time.Hour * 24 * 31},
+		// an unknown period must not shorten the expiration
+		{period: Period("yearly"), want: FUPEntryTTL, atLeast: time.Hour * 24 * 31},
+	}
+	for _, tt := range tests {
+		t.Run(string(tt.period), func(t *testing.T) {
+			got := tt.period.GetEntryTTL()
+			if tt.want != got {
+				t.Errorf("GetEntryTTL() = %v, want %v", got, tt.want)
+			}
+			if got <= tt.atLeast {
+				t.Errorf("GetEntryTTL() = %v, want longer than the period itself (%v)", got, tt.atLeast)
+			}
+		})
+	}
+}
