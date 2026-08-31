@@ -36,10 +36,33 @@ const (
 	ApiUser   = "api-user"
 )
 
-// FUPEntryTTL is the expiration of FUP cache entries. It is slightly longer than the longest
-// FUP period (monthly), so that counters that are no longer used (e.g. per-IP counters of
-// one-off visitors) are released instead of growing unbounded.
+// FUPEntryTTL is the expiration of FUP cache entries whose limited periods are not known to the
+// caller. It is slightly longer than the longest FUP period (monthly), so that counters that are
+// no longer used (e.g. per-IP counters of one-off visitors) are released instead of growing
+// unbounded.
 const FUPEntryTTL = time.Hour * 24 * 35
+
+// GetEntryTTL returns how long a FUP cache entry has to survive inactivity to keep counting this
+// period correctly - the period itself plus a margin, since the expiration is refreshed on every
+// increment and the entry only has to outlive the gap between two requests that share a period.
+// A scope that limits by nothing longer than a day therefore keeps its entries for two days
+// instead of the 35 the monthly period needs, which matters for keys with an unbounded key space
+// (per IP, per cookie).
+func (p Period) GetEntryTTL() time.Duration {
+	switch p {
+	case PeriodMinutely:
+		return time.Hour
+	case PeriodHourly:
+		return time.Hour * 25
+	case PeriodDaily:
+		return time.Hour * 24 * 2
+	case PeriodWeekly:
+		return time.Hour * 24 * 8
+	case PeriodMonthly:
+		return FUPEntryTTL
+	}
+	return FUPEntryTTL
+}
 
 var ScopeAccessibilityOptions = []ScopeAccessibility{
 	ScopeAccessibilityAccessible,

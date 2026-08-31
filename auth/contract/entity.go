@@ -202,6 +202,28 @@ func (s FUPScope) HasLimit(key string) bool {
 	return false
 }
 
+// GetEntryTTL returns how long the cache entry of the given FUP path (e.g. constants.FUPIPKey)
+// has to survive inactivity for this scope to be enforced - the longest period the scope actually
+// limits by, plus a margin. A path the scope doesn't limit at all falls back to
+// constants.FUPEntryTTL, which covers every period.
+func (s FUPScope) GetEntryTTL(path string) time.Duration {
+	var ttl time.Duration
+	for _, period := range constants.FUPScopePeriods {
+		limit := s.GetLimit(path + "." + string(period))
+		if nil == limit || *limit < 0 {
+			// no limitation, so nothing has to be counted for this period
+			continue
+		}
+		if periodTTL := period.GetEntryTTL(); periodTTL > ttl {
+			ttl = periodTTL
+		}
+	}
+	if 0 == ttl {
+		return constants.FUPEntryTTL
+	}
+	return ttl
+}
+
 type OneOffToken struct {
 	Value   string    `json:"token"`
 	Expires time.Time `json:"expires"`

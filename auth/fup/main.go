@@ -6,12 +6,23 @@ import (
 	"github.com/wernerdweight/api-auth-go/v3/auth/constants"
 	"github.com/wernerdweight/api-auth-go/v3/auth/contract"
 	"strings"
+	"time"
 )
+
+// incrementFUPEntry increments the entry, expiring it as soon as the enforced periods allow if the
+// driver supports it (see contract.FUPTTLCacheDriverInterface); a driver that doesn't keeps every
+// entry for constants.FUPEntryTTL.
+func incrementFUPEntry(cacheDriver contract.CacheDriverInterface, cacheKey string, ttl time.Duration) (*contract.FUPCacheEntry, *contract.AuthError) {
+	if ttlDriver, ok := cacheDriver.(contract.FUPTTLCacheDriverInterface); ok {
+		return ttlDriver.IncrementFUPEntryWithTTL(cacheKey, ttl)
+	}
+	return cacheDriver.IncrementFUPEntry(cacheKey)
+}
 
 func checkLimits(scope *contract.FUPScope, key string, cacheId string, path string, cacheDriver contract.CacheDriverInterface) (map[constants.Period]contract.FUPLimits, *contract.FUPScopeLimits) {
 	limits := make(map[constants.Period]contract.FUPLimits)
 	cacheKey := fmt.Sprintf("%s_%s", key, strings.Replace(cacheId, "/", "-", -1))
-	cacheEntry, err := cacheDriver.IncrementFUPEntry(cacheKey)
+	cacheEntry, err := incrementFUPEntry(cacheDriver, cacheKey, scope.GetEntryTTL(path))
 	if nil != err {
 		return nil, &contract.FUPScopeLimits{
 			Error: err,

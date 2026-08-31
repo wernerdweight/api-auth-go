@@ -1,6 +1,17 @@
 Changelog
 ====================================
 
+v3.1.0
+------------
+
+### Added
+
+- `contract.FUPTTLCacheDriverInterface`, an optional addition to `contract.CacheDriverInterface` with a single method, `IncrementFUPEntryWithTTL(key string, ttl time.Duration) (*FUPCacheEntry, *AuthError)`. The FUP checkers use it when the configured driver implements it, deriving the TTL from the scope being enforced (`contract.FUPScope.GetEntryTTL`), so an entry is kept only as long as the longest period the scope limits by needs it - two days for a scope limiting per minute and per day, instead of the 35 the monthly period needs. That bounds the memory a FUP key with an unbounded key space (per IP, per cookie) can occupy: at the 490 requests/minute a single unauthenticated source was measured at, the difference is roughly 5 GB and 300 MB of Redis.
+
+  Nothing has to be implemented - this is not a breaking change. A driver that only implements `CacheDriverInterface` keeps being used through `IncrementFUPEntry`, with `constants.FUPEntryTTL` for every entry as before. **A custom driver that wraps a bundled one** (to add metrics, to inject failures) **has to override both increments**, though, or the embedded implementation stays in use for the TTL-aware one.
+
+- `constants.Period.GetEntryTTL` returns how long an entry has to survive inactivity to keep counting that period correctly, and `contract.FUPScope.GetEntryTTL(path)` the longest such TTL a given scope path needs.
+
 v3.0.0
 ------------
 

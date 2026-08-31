@@ -39,12 +39,18 @@ func (p brokenApiClientProvider) ProvideByApiKey(_ string) (contract.ApiClientIn
 	return nil, contract.NewInternalError(contract.DatabaseError, nil)
 }
 
-// brokenFUPCacheDriver can't count requests, e.g. because the cache is unreachable
+// brokenFUPCacheDriver can't count requests, e.g. because the cache is unreachable. It overrides
+// both increments - the embedded driver implements the optional contract.FUPTTLCacheDriverInterface
+// too, and overriding only IncrementFUPEntry would leave the embedded one in use
 type brokenFUPCacheDriver struct {
 	*cache.MemoryCacheDriver
 }
 
 func (d brokenFUPCacheDriver) IncrementFUPEntry(_ string) (*contract.FUPCacheEntry, *contract.AuthError) {
+	return nil, contract.NewInternalError(contract.CacheError, nil)
+}
+
+func (d brokenFUPCacheDriver) IncrementFUPEntryWithTTL(_ string, _ time.Duration) (*contract.FUPCacheEntry, *contract.AuthError) {
 	return nil, contract.NewInternalError(contract.CacheError, nil)
 }
 

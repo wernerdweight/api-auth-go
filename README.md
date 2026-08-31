@@ -563,6 +563,8 @@ If you implement your own driver, `IncrementFUPEntry` is the method to be carefu
 - an increment that arrives **out of order** (its period was decided before another request that was stored first) must not reset a counter or move the stored timestamp backwards,
 - entries should **expire** after `constants.FUPEntryTTL` of inactivity, otherwise counters of one-off sources (per-IP, per-cookie) accumulate forever.
 
+Optionally, implement `contract.FUPTTLCacheDriverInterface` as well. Its `IncrementFUPEntryWithTTL` is the same increment with a caller-supplied expiration, derived from the scope being enforced, so entries live only as long as the longest period the scope limits by actually needs (a scope limiting per minute and per day keeps them for two days instead of 35). A driver that doesn't implement it keeps `constants.FUPEntryTTL` for everything, which is correct, just less frugal. If your driver *wraps* one of the built-in ones, override both increments - otherwise the embedded implementation stays in use for the TTL-aware one.
+
 ### With user registration:
 
 By default, user registration is disabled. If you don't already have registration process in place, you can enable built-in registration by setting `WithRegistration` to `true` in `User` configuration (see below).
@@ -824,7 +826,7 @@ If no limit is reached, each response to a request that has limits configured wi
 {"hourly":{"limit":200,"used":3},"minutely":{"limit":10,"used":1},"weekly":{"limit":100,"used":46}}
 ```
 
-FUP counters are stored in the cache under a key derived from the FUP key (client id, user login, `anonymous`) and the value the checker limits by (path, IP, cookie). They are incremented atomically, and they expire after 35 days of inactivity (slightly more than the longest supported interval).
+FUP counters are stored in the cache under a key derived from the FUP key (client id, user login, `anonymous`) and the value the checker limits by (path, IP, cookie). They are incremented atomically, and they expire after the longest period the scope limits by needs them - two days for a scope limiting per minute and per day, 35 days if it limits per month (slightly more than the longest supported interval). The expiration is refreshed on every increment, so an entry only has to outlive the gap between two requests sharing a period. This matters for keys with an unbounded key space: a per-IP scope of `{"minutely": 60, "daily": 5000}` holds a key for two days per source IP, not 35.
 
 ### With anonymous FUP limits:
 
