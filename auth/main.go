@@ -54,9 +54,10 @@ func Middleware(r *gin.Engine, c contract.Config) gin.HandlerFunc {
 				"payload": err.Payload,
 			}
 			c.AbortWithStatusJSON(err.Status, errorResponse)
+			// async: gin recycles c for the next request, so the subscriber gets a copy
 			events.GetEventHub().DispatchAsync(&contract.AuthenticationFailedEvent{
 				Error:    *err,
-				Context:  c,
+				Context:  c.Copy(),
 				Response: errorResponse,
 			})
 			return
