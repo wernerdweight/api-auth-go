@@ -1,6 +1,13 @@
 Changelog
 ====================================
 
+v3.1.1
+------------
+
+### Fixed
+
+- `AuthenticationFailedEvent.Context` is now `c.Copy()` instead of the live `*gin.Context`. The event is dispatched async, and gin recycles the context for the next request once the handler returns, so a subscriber could read (or write) another request's data, or panic on a nil `Request.GetBody`. Subscribers need no change.
+
 v3.1.0
 ------------
 
