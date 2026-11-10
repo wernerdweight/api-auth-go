@@ -221,7 +221,7 @@ func (p GormApiUserProvider) ProvideNew(login string, encryptedPassword string) 
 }
 
 func (p GormApiUserProvider) InvalidateTokens(user contract.ApiUserInterface) *contract.AuthError {
-	slog.Debug("invalidating tokens for user", slog.String("user", user.GetLogin()))
+	slog.Debug("invalidating tokens for user", slog.String("user_id", user.GetID()))
 	conn := p.getConnection()
 	id, err := uuid.Parse(user.GetID())
 	if nil != err {
@@ -233,21 +233,20 @@ func (p GormApiUserProvider) InvalidateTokens(user contract.ApiUserInterface) *c
 		return contract.NewInternalError(contract.DatabaseError, map[string]string{"details": result.Error.Error()})
 	}
 	if 0 == len(tokens) {
-		slog.Debug("no tokens to invalidate for user", slog.String("user", user.GetLogin()))
+		slog.Debug("no tokens to invalidate for user", slog.String("user_id", user.GetID()))
 		return nil
 	}
-	slog.Debug("tokens to invalidate for user", slog.Int("tokens", len(tokens)), slog.String("user", user.GetLogin()))
+	slog.Debug("tokens to invalidate for user", slog.Int("tokens", len(tokens)), slog.String("user_id", user.GetID()))
 	for index, token := range tokens {
 		tokens[index].SetExpirationDate(time.Now())
-		slog.Debug("invalidating token", slog.String("token", token.Token))
 		if config.ProviderInstance.IsCacheEnabled() {
 			cacheErr := config.ProviderInstance.GetCacheDriver().InvalidateToken(token.Token)
 			if nil != cacheErr {
-				slog.Error("can't invalidate token in cache", slog.String("token", token.Token), slog.String("user", user.GetLogin()), slog.String("error", cacheErr.Err.Error()))
+				slog.Error("can't invalidate token in cache", slog.String("user_id", user.GetID()), slog.String("error", cacheErr.Err.Error()))
 			}
 		}
 	}
-	slog.Debug("saving invalidated tokens for user", slog.String("user", user.GetLogin()), slog.Int("tokens", len(tokens)))
+	slog.Debug("saving invalidated tokens for user", slog.String("user_id", user.GetID()), slog.Int("tokens", len(tokens)))
 	result = conn.Save(&tokens)
 	if nil != result.Error {
 		return contract.NewInternalError(contract.DatabaseError, map[string]string{"details": result.Error.Error()})
